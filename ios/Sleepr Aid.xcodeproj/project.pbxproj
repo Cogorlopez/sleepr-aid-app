@@ -1,0 +1,584 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXContainerItemProxy section */
+		072A70002F9AD0B600339BB6 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 072A6FE72F9AD0B400339BB6 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 072A6FEE2F9AD0B400339BB6;
+			remoteInfo = sleepraid;
+		};
+		072A700A2F9AD0B600339BB6 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 072A6FE72F9AD0B400339BB6 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 072A6FEE2F9AD0B400339BB6;
+			remoteInfo = sleepraid;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		072A6FEF2F9AD0B400339BB6 /* Sleepr Aid.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Sleepr Aid.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		072A6FFF2F9AD0B600339BB6 /* Sleepr AidTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Sleepr AidTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		072A70092F9AD0B600339BB6 /* Sleepr AidUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Sleepr AidUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		072A70322F9AD2AD00339BB6 /* Exceptions for "sleepraid" folder in "Sleepr Aid" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			assetTagsByRelativePath = {
+				LaunchScreen.storyboard = ("Sleepr Aid", );
+			};
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 072A6FEE2F9AD0B400339BB6 /* Sleepr Aid */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		072A6FF12F9AD0B400339BB6 /* sleepraid */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				072A70322F9AD2AD00339BB6 /* Exceptions for "sleepraid" folder in "Sleepr Aid" target */,
+			);
+			path = sleepraid;
+			sourceTree = "<group>";
+		};
+		072A70022F9AD0B600339BB6 /* sleepraidTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = sleepraidTests;
+			sourceTree = "<group>";
+		};
+		072A700C2F9AD0B600339BB6 /* sleepraidUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = sleepraidUITests;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		072A6FEC2F9AD0B400339BB6 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		072A6FFC2F9AD0B600339BB6 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		072A70062F9AD0B600339BB6 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		072A6FE62F9AD0B400339BB6 = {
+			isa = PBXGroup;
+			children = (
+				072A6FF12F9AD0B400339BB6 /* sleepraid */,
+				072A70022F9AD0B600339BB6 /* sleepraidTests */,
+				072A700C2F9AD0B600339BB6 /* sleepraidUITests */,
+				072A6FF02F9AD0B400339BB6 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		072A6FF02F9AD0B400339BB6 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				072A6FEF2F9AD0B400339BB6 /* Sleepr Aid.app */,
+				072A6FFF2F9AD0B600339BB6 /* Sleepr AidTests.xctest */,
+				072A70092F9AD0B600339BB6 /* Sleepr AidUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		072A6FEE2F9AD0B400339BB6 /* Sleepr Aid */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 072A70132F9AD0B600339BB6 /* Build configuration list for PBXNativeTarget "Sleepr Aid" */;
+			buildPhases = (
+				072A6FEB2F9AD0B400339BB6 /* Sources */,
+				072A6FEC2F9AD0B400339BB6 /* Frameworks */,
+				072A6FED2F9AD0B400339BB6 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				072A6FF12F9AD0B400339BB6 /* sleepraid */,
+			);
+			name = "Sleepr Aid";
+			packageProductDependencies = (
+			);
+			productName = sleepraid;
+			productReference = 072A6FEF2F9AD0B400339BB6 /* Sleepr Aid.app */;
+			productType = "com.apple.product-type.application";
+		};
+		072A6FFE2F9AD0B600339BB6 /* Sleepr AidTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 072A70162F9AD0B600339BB6 /* Build configuration list for PBXNativeTarget "Sleepr AidTests" */;
+			buildPhases = (
+				072A6FFB2F9AD0B600339BB6 /* Sources */,
+				072A6FFC2F9AD0B600339BB6 /* Frameworks */,
+				072A6FFD2F9AD0B600339BB6 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				072A70012F9AD0B600339BB6 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				072A70022F9AD0B600339BB6 /* sleepraidTests */,
+			);
+			name = "Sleepr AidTests";
+			packageProductDependencies = (
+			);
+			productName = sleepraidTests;
+			productReference = 072A6FFF2F9AD0B600339BB6 /* Sleepr AidTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		072A70082F9AD0B600339BB6 /* Sleepr AidUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 072A70192F9AD0B600339BB6 /* Build configuration list for PBXNativeTarget "Sleepr AidUITests" */;
+			buildPhases = (
+				072A70052F9AD0B600339BB6 /* Sources */,
+				072A70062F9AD0B600339BB6 /* Frameworks */,
+				072A70072F9AD0B600339BB6 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				072A700B2F9AD0B600339BB6 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				072A700C2F9AD0B600339BB6 /* sleepraidUITests */,
+			);
+			name = "Sleepr AidUITests";
+			packageProductDependencies = (
+			);
+			productName = sleepraidUITests;
+			productReference = 072A70092F9AD0B600339BB6 /* Sleepr AidUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		072A6FE72F9AD0B400339BB6 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				KnownAssetTags = (
+					"Sleepr Aid",
+				);
+				LastSwiftUpdateCheck = 1610;
+				LastUpgradeCheck = 1610;
+				TargetAttributes = {
+					072A6FEE2F9AD0B400339BB6 = {
+						CreatedOnToolsVersion = 16.1;
+					};
+					072A6FFE2F9AD0B600339BB6 = {
+						CreatedOnToolsVersion = 16.1;
+						TestTargetID = 072A6FEE2F9AD0B400339BB6;
+					};
+					072A70082F9AD0B600339BB6 = {
+						CreatedOnToolsVersion = 16.1;
+						TestTargetID = 072A6FEE2F9AD0B400339BB6;
+					};
+				};
+			};
+			buildConfigurationList = 072A6FEA2F9AD0B400339BB6 /* Build configuration list for PBXProject "Sleepr Aid" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 072A6FE62F9AD0B400339BB6;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 072A6FF02F9AD0B400339BB6 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				072A6FEE2F9AD0B400339BB6 /* Sleepr Aid */,
+				072A6FFE2F9AD0B600339BB6 /* Sleepr AidTests */,
+				072A70082F9AD0B600339BB6 /* Sleepr AidUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		072A6FED2F9AD0B400339BB6 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		072A6FFD2F9AD0B600339BB6 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		072A70072F9AD0B600339BB6 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		072A6FEB2F9AD0B400339BB6 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		072A6FFB2F9AD0B600339BB6 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		072A70052F9AD0B600339BB6 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		072A70012F9AD0B600339BB6 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 072A6FEE2F9AD0B400339BB6 /* Sleepr Aid */;
+			targetProxy = 072A70002F9AD0B600339BB6 /* PBXContainerItemProxy */;
+		};
+		072A700B2F9AD0B600339BB6 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 072A6FEE2F9AD0B400339BB6 /* Sleepr Aid */;
+			targetProxy = 072A700A2F9AD0B600339BB6 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		072A70112F9AD0B600339BB6 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.1;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		072A70122F9AD0B600339BB6 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.1;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		072A70142F9AD0B600339BB6 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"sleepraid/Preview Content\"";
+				DEVELOPMENT_TEAM = XX6X5H9SCQ;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = sleepraid/Info.plist;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = "";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.cogorlopez.sleepraid;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		072A70152F9AD0B600339BB6 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"sleepraid/Preview Content\"";
+				DEVELOPMENT_TEAM = XX6X5H9SCQ;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = sleepraid/Info.plist;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = "";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.cogorlopez.sleepraid;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		072A70172F9AD0B600339BB6 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.1;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.cogorlopez.sleepraidTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Sleepr Aid.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Sleepr Aid";
+			};
+			name = Debug;
+		};
+		072A70182F9AD0B600339BB6 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.1;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.cogorlopez.sleepraidTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Sleepr Aid.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Sleepr Aid";
+			};
+			name = Release;
+		};
+		072A701A2F9AD0B600339BB6 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.cogorlopez.sleepraidUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = sleepraid;
+			};
+			name = Debug;
+		};
+		072A701B2F9AD0B600339BB6 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.cogorlopez.sleepraidUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = sleepraid;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		072A6FEA2F9AD0B400339BB6 /* Build configuration list for PBXProject "Sleepr Aid" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				072A70112F9AD0B600339BB6 /* Debug */,
+				072A70122F9AD0B600339BB6 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		072A70132F9AD0B600339BB6 /* Build configuration list for PBXNativeTarget "Sleepr Aid" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				072A70142F9AD0B600339BB6 /* Debug */,
+				072A70152F9AD0B600339BB6 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		072A70162F9AD0B600339BB6 /* Build configuration list for PBXNativeTarget "Sleepr AidTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				072A70172F9AD0B600339BB6 /* Debug */,
+				072A70182F9AD0B600339BB6 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		072A70192F9AD0B600339BB6 /* Build configuration list for PBXNativeTarget "Sleepr AidUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				072A701A2F9AD0B600339BB6 /* Debug */,
+				072A701B2F9AD0B600339BB6 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 072A6FE72F9AD0B400339BB6 /* Project object */;
+}

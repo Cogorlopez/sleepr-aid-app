@@ -1,0 +1,28 @@
+# General
+.DS_Store
+*.iml
+
+# ─── Android ──────────────────────────────────────────────────────────────────
+android/local.properties
+android/.gradle/
+android/build/
+android/app/build/
+android/captures/
+android/.externalNativeBuild/
+android/.cxx/
+android/*.jks
+android/*.keystore
+android/.idea/caches/
+android/.idea/libraries/
+android/.idea/modules.xml
+android/.idea/workspace.xml
+android/.idea/navEditor.xml
+android/.idea/assetWizardSettings.xml
+
+# ─── iOS ──────────────────────────────────────────────────────────────────────
+ios/DerivedData/
+ios/.build/
+ios/**/*.xcuserstate
+ios/**/*.xcuserdata/
+ios/Pods/
+ios/*.xcworkspace/xcuserdata/

@@ -1,0 +1,101 @@
+import AVFoundation
+
+enum NoiseType: String, CaseIterable, Identifiable {
+    case white = "White Noise"
+    case pink  = "Pink Noise"
+    case brown = "Brown Noise"
+    var id: Self { self }
+}
+
+class NoiseGenerator: ObservableObject {
+
+    private let engine = AVAudioEngine()
+    private var sourceNode: AVAudioSourceNode?
+
+    @Published var isPlaying = false
+    var noiseType: NoiseType = .pink
+
+    private var volume: Float = 0.7
+
+    // Pink noise IIR state (Paul Kellet algorithm) — written only on the audio thread
+    private var b0: Float = 0, b1: Float = 0, b2: Float = 0
+    private var b3: Float = 0, b4: Float = 0, b5: Float = 0, b6: Float = 0
+
+    // Brown noise integrator — written only on the audio thread
+    private var lastBrown: Float = 0
+
+    private let whiteGain: Float = 0.25
+    private let pinkGain:  Float = 0.85
+    private let brownGain: Float = 0.95
+
+    func start(type: NoiseType = .pink) {
+        stop()
+        noiseType = type
+
+        let format = AVAudioFormat(standardFormatWithSampleRate: 44100, channels: 1)!
+
+        sourceNode = AVAudioSourceNode(format: format) { [weak self] _, _, frameCount, audioBufferList in
+            guard let self else { return noErr }
+            let abList = UnsafeMutableAudioBufferListPointer(audioBufferList)
+            guard let data = abList[0].mData?.assumingMemoryBound(to: Float.self) else { return noErr }
+            let type = self.noiseType
+            let vol  = self.volume
+            for i in 0..<Int(frameCount) {
+                data[i] = self.nextSample(type: type) * vol
+            }
+            return noErr
+        }
+
+        let mixer = engine.mainMixerNode
+        engine.attach(sourceNode!)
+        engine.connect(sourceNode!, to: mixer, format: format)
+
+        do {
+            try AVAudioSession.sharedInstance().setCategory(.playback)
+            try AVAudioSession.sharedInstance().setActive(true)
+            try engine.start()
+            DispatchQueue.main.async { self.isPlaying = true }
+        } catch {
+            stop()
+        }
+    }
+
+    func stop() {
+        engine.stop()
+        if let node = sourceNode {
+            engine.detach(node)
+            sourceNode = nil
+        }
+        b0 = 0; b1 = 0; b2 = 0; b3 = 0; b4 = 0; b5 = 0; b6 = 0
+        lastBrown = 0
+        DispatchQueue.main.async { self.isPlaying = false }
+    }
+
+    func setVolume(_ v: Float) {
+        volume = v
+    }
+
+    private func nextSample(type: NoiseType) -> Float {
+        switch type {
+        case .white:
+            return Float.random(in: -1...1) * whiteGain
+
+        case .pink:
+            let w = Float.random(in: -1...1)
+            b0 = 0.99886 * b0 + w * 0.0555179
+            b1 = 0.99332 * b1 + w * 0.0750759
+            b2 = 0.96900 * b2 + w * 0.1538520
+            b3 = 0.86650 * b3 + w * 0.3104856
+            b4 = 0.55000 * b4 + w * 0.5329522
+            b5 = -0.7616  * b5 - w * 0.0168980
+            let pink = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + w * 0.5362) * 0.11
+            b6 = w * 0.115926
+            return min(1, max(-1, pink)) * pinkGain
+
+        case .brown:
+            let w = Float.random(in: -1...1)
+            lastBrown = min(1, max(-1, lastBrown + w * 0.02))
+            return lastBrown * brownGain
+        }
+    }
+}
