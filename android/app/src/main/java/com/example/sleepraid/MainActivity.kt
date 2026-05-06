@@ -119,7 +119,7 @@ fun SleeprAidScreen(service: NoiseService?) {
     val configuration = LocalConfiguration.current
     val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
     val audioManager = remember { context.getSystemService(Context.AUDIO_SERVICE) as AudioManager }
-    val maxVolume = remember { audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC) }
+    val maxVolume = remember { audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC).coerceAtLeast(1) }
 
     var volume by remember {
         mutableFloatStateOf(audioManager.getStreamVolume(AudioManager.STREAM_MUSIC).toFloat() / maxVolume)
@@ -256,11 +256,11 @@ fun SleeprAidScreen(service: NoiseService?) {
                 )
             }
 
-            Spacer(modifier = Modifier.weight(0.7f))
+            Spacer(modifier = Modifier.weight(1f))
 
             PowerButton(isOn = isOn, size = 260.dp, onClick = onPowerClick)
 
-            Spacer(modifier = Modifier.weight(0.7f))
+            Spacer(modifier = Modifier.weight(0.4f))
 
             VolumeControl(volume = volume, onVolumeChange = onVolumeChange)
 
@@ -307,7 +307,7 @@ fun SleeprAidScreen(service: NoiseService?) {
                 }
             }
 
-            Spacer(modifier = Modifier.height(48.dp))
+            Spacer(modifier = Modifier.height(80.dp))
         }
     }
 }
