@@ -124,6 +124,7 @@ fun SleeprAidScreen(service: NoiseService?) {
     // so Compose recomposes automatically when the notification toggle changes them.
     val isOn = service?.isPlaying ?: false
     val selectedType = service?.noiseType ?: NoiseGenerator.NoiseType.PINK
+    val pauseOtherAudio = service?.pauseOtherAudio ?: false
 
     // Keep slider in sync when hardware volume buttons are pressed
     DisposableEffect(Unit) {
@@ -191,6 +192,11 @@ fun SleeprAidScreen(service: NoiseService?) {
                     initialMinutes = savedTimerMinutes,
                     onSave = onTimerSave
                 )
+                Spacer(modifier = Modifier.height(12.dp))
+                PauseAudioToggle(
+                    checked = pauseOtherAudio,
+                    onCheckedChange = { service?.updatePauseOtherAudio(it) }
+                )
             }
         }
     } else {
@@ -233,6 +239,13 @@ fun SleeprAidScreen(service: NoiseService?) {
                 initialHours = savedTimerHours,
                 initialMinutes = savedTimerMinutes,
                 onSave = onTimerSave
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            PauseAudioToggle(
+                checked = pauseOtherAudio,
+                onCheckedChange = { service?.updatePauseOtherAudio(it) }
             )
 
             Spacer(modifier = Modifier.height(48.dp))
@@ -565,6 +578,39 @@ private fun formatRemainingTime(seconds: Int): String {
         h > 0 -> "${h}h ${m}m"
         m > 0 -> "${m}m ${s}s"
         else -> "${s}s"
+    }
+}
+
+@Composable
+fun PauseAudioToggle(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+    Surface(
+        color = Color(0xFF1E1E1E),
+        shape = RoundedCornerShape(16.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(64.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 20.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = "Pause other audio",
+                color = Color.White.copy(alpha = 0.9f),
+                fontSize = 18.sp
+            )
+            Switch(
+                checked = checked,
+                onCheckedChange = onCheckedChange,
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = Color.White,
+                    checkedTrackColor = Color(0xFF90CAF9)
+                )
+            )
+        }
     }
 }
 

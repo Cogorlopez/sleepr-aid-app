@@ -5,7 +5,11 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
+import android.content.Context
 import android.content.Intent
+import android.media.AudioAttributes
+import android.media.AudioFocusRequest
+import android.media.AudioManager
 import android.os.Binder
 import android.os.Build
 import android.os.IBinder
@@ -44,6 +48,22 @@ class NoiseService : Service() {
         private set
     var timerRemainingSeconds by mutableIntStateOf(0)
         private set
+    var pauseOtherAudio by mutableStateOf(false)
+        private set
+
+    private lateinit var audioManager: AudioManager
+    private var audioFocusRequest: AudioFocusRequest? = null
+
+    private val audioFocusListener = AudioManager.OnAudioFocusChangeListener { focusChange ->
+        when (focusChange) {
+            AudioManager.AUDIOFOCUS_LOSS -> stopPlayback()
+            AudioManager.AUDIOFOCUS_LOSS_TRANSIENT,
+            AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> {
+                if (isPlaying) stopPlayback()
+            }
+            AudioManager.AUDIOFOCUS_GAIN -> { /* do not auto-resume */ }
+        }
+    }
 
     companion object {
         const val ACTION_TOGGLE = "com.example.sleepraid.ACTION_TOGGLE"
@@ -63,8 +83,10 @@ class NoiseService : Service() {
             }
             getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
         }
+        audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
         serviceScope.launch {
             noiseType = prefs.noiseType.first()
+            pauseOtherAudio = prefs.pauseOtherAudio.first()
         }
     }
 
@@ -76,6 +98,7 @@ class NoiseService : Service() {
     override fun onBind(intent: Intent): IBinder = binder
 
     fun play(type: NoiseGenerator.NoiseType = noiseType) {
+        if (pauseOtherAudio && !requestAudioFocus()) return
         noiseType = type
         noiseGenerator.start(type)
         isPlaying = true
@@ -86,12 +109,48 @@ class NoiseService : Service() {
         cancelTimer()
         noiseGenerator.stop()
         isPlaying = false
+        if (pauseOtherAudio) abandonAudioFocus()
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
     }
 
     fun toggle() {
         if (isPlaying) stopPlayback() else play()
+    }
+
+    fun updatePauseOtherAudio(value: Boolean) {
+        pauseOtherAudio = value
+        serviceScope.launch { prefs.savePauseOtherAudio(value) }
+    }
+
+    private fun requestAudioFocus(): Boolean {
+        val result = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val req = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+                .setAudioAttributes(
+                    AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_MEDIA)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                        .build()
+                )
+                .setOnAudioFocusChangeListener(audioFocusListener)
+                .build()
+            audioFocusRequest = req
+            audioManager.requestAudioFocus(req)
+        } else {
+            @Suppress("DEPRECATION")
+            audioManager.requestAudioFocus(audioFocusListener, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN)
+        }
+        return result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED
+    }
+
+    private fun abandonAudioFocus() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            audioFocusRequest?.let { audioManager.abandonAudioFocus(it) }
+            audioFocusRequest = null
+        } else {
+            @Suppress("DEPRECATION")
+            audioManager.abandonAudioFocus(audioFocusListener)
+        }
     }
 
     fun updateNoiseType(type: NoiseGenerator.NoiseType) {
@@ -135,6 +194,7 @@ class NoiseService : Service() {
         timerJob = null
         noiseGenerator.stop()
         isPlaying = false
+        if (pauseOtherAudio) abandonAudioFocus()
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
     }

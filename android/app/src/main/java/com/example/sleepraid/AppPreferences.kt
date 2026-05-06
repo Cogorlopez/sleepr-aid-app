@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -18,6 +19,7 @@ class AppPreferences(private val context: Context) {
         private val NOISE_TYPE = stringPreferencesKey("noise_type")
         private val TIMER_HOURS = intPreferencesKey("timer_hours")
         private val TIMER_MINUTES = intPreferencesKey("timer_minutes")
+        private val PAUSE_OTHER_AUDIO = booleanPreferencesKey("pause_other_audio")
     }
 
     val noiseType: Flow<NoiseGenerator.NoiseType> = context.dataStore.data.map { prefs ->
@@ -40,5 +42,11 @@ class AppPreferences(private val context: Context) {
             it[TIMER_HOURS] = hours
             it[TIMER_MINUTES] = minutes
         }
+    }
+
+    val pauseOtherAudio: Flow<Boolean> = context.dataStore.data.map { it[PAUSE_OTHER_AUDIO] ?: false }
+
+    suspend fun savePauseOtherAudio(value: Boolean) {
+        context.dataStore.edit { it[PAUSE_OTHER_AUDIO] = value }
     }
 }
