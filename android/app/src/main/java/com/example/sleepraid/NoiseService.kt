@@ -121,12 +121,12 @@ class NoiseService : Service() {
     override fun onBind(intent: Intent): IBinder = binder
 
     fun play(type: NoiseGenerator.NoiseType = noiseType) {
-        if (wakeTimerTargetTime != null) cancelWakeTimer()
         if (pauseOtherAudio && !requestAudioFocus()) return
         noiseType = type
         noiseGenerator.start(type)
         isPlaying = true
         startForeground(NOTIFICATION_ID, buildNotification())
+        if (wakeTimerTargetTime != null) cancelWakeTimer()
     }
 
     fun stopPlayback() {
