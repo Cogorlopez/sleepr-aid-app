@@ -5,7 +5,6 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
-import android.content.Context
 import android.content.Intent
 import android.media.AudioAttributes
 import android.media.AudioFocusRequest
@@ -83,7 +82,7 @@ class NoiseService : Service() {
             }
             getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
         }
-        audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
         serviceScope.launch {
             noiseType = prefs.noiseType.first()
             pauseOtherAudio = prefs.pauseOtherAudio.first()
@@ -145,7 +144,7 @@ class NoiseService : Service() {
 
     private fun abandonAudioFocus() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            audioFocusRequest?.let { audioManager.abandonAudioFocus(it) }
+            audioFocusRequest?.let { audioManager.abandonAudioFocusRequest(it) }
             audioFocusRequest = null
         } else {
             @Suppress("DEPRECATION")
