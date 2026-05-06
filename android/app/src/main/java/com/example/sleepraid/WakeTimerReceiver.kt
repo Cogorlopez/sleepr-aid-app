@@ -4,20 +4,13 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.os.Build
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
 class WakeTimerReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         when (intent.action) {
             NoiseService.ACTION_WAKE_ALARM -> {
-                val prefs = AppPreferences(context)
-                CoroutineScope(Dispatchers.IO).launch {
-                    prefs.saveWakeTimerTargetTime(null)
-                }
                 val serviceIntent = Intent(context, NoiseService::class.java).apply {
-                    action = NoiseService.ACTION_PLAY
+                    action = NoiseService.ACTION_WAKE_AUDIO
                 }
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     context.startForegroundService(serviceIntent)

@@ -71,6 +71,7 @@ class NoiseService : Service() {
     companion object {
         const val ACTION_TOGGLE = "com.example.sleepraid.ACTION_TOGGLE"
         const val ACTION_PLAY = "com.example.sleepraid.ACTION_PLAY"
+        const val ACTION_WAKE_AUDIO = "com.example.sleepraid.ACTION_WAKE_AUDIO"
         const val ACTION_SET_WAKE_TIMER = "com.example.sleepraid.ACTION_SET_WAKE_TIMER"
         const val ACTION_CANCEL_WAKE_TIMER = "com.example.sleepraid.ACTION_CANCEL_WAKE_TIMER"
         const val ACTION_WAKE_ALARM = "com.example.sleepraid.ACTION_WAKE_ALARM"
@@ -108,6 +109,7 @@ class NoiseService : Service() {
         when (intent?.action) {
             ACTION_TOGGLE -> toggle()
             ACTION_PLAY -> play()
+            ACTION_WAKE_AUDIO -> startWakeAudio()
             ACTION_SET_WAKE_TIMER -> {
                 val h = intent.getIntExtra("hours", 0)
                 val m = intent.getIntExtra("minutes", 0)
@@ -127,6 +129,23 @@ class NoiseService : Service() {
         startForeground(NOTIFICATION_ID, buildNotification())
         noiseGenerator.start(type)
         if (wakeTimerTargetTime != null) cancelWakeTimer()
+    }
+
+    private fun startWakeAudio() {
+        // Clear wake timer state first so play() won't call cancelWakeTimer() and
+        // so the UI transitions away from the countdown immediately.
+        wakeTimerTargetTime = null
+        wakeTimerUpdateJob?.cancel()
+        wakeTimerUpdateJob = null
+        serviceScope.launch { prefs.saveWakeTimerTargetTime(null) }
+        getSystemService(NotificationManager::class.java).cancel(WAKE_TIMER_NOTIFICATION_ID)
+
+        // Request focus best-effort — a wake alarm must start audio regardless of the result.
+        if (pauseOtherAudio) requestAudioFocus()
+
+        isPlaying = true
+        startForeground(NOTIFICATION_ID, buildNotification())
+        noiseGenerator.start(noiseType)
     }
 
     fun stopPlayback() {
