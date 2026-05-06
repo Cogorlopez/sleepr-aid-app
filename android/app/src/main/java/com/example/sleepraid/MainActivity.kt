@@ -43,6 +43,10 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Alarm
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Timer
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.draw.drawBehind
@@ -126,6 +130,7 @@ fun SleeprAidScreen(service: NoiseService?) {
     val isOn = service?.isPlaying ?: false
     val selectedType = service?.noiseType ?: NoiseGenerator.NoiseType.PINK
     val pauseOtherAudio = service?.pauseOtherAudio ?: false
+    var selectedPanel by remember { mutableStateOf(Panel.BASIC) }
 
     // Keep slider in sync when hardware volume buttons are pressed
     DisposableEffect(Unit) {
@@ -190,29 +195,44 @@ fun SleeprAidScreen(service: NoiseService?) {
                 Spacer(modifier = Modifier.height(20.dp))
                 VolumeControl(volume = volume, onVolumeChange = onVolumeChange)
                 Spacer(modifier = Modifier.height(16.dp))
-                SoundSelector(selectedType = selectedType, onTypeSelected = onTypeSelected)
+                PanelSwitcher(selected = selectedPanel, onSelect = { selectedPanel = it })
                 Spacer(modifier = Modifier.height(12.dp))
-                WakeTimerControl(
-                    service = service,
-                    selectedType = selectedType,
-                    initialHours = savedWakeHours,
-                    initialMinutes = savedWakeMinutes,
-                    onSave = onWakeTimerSave
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                SleepTimerControl(
-                    service = service,
-                    selectedType = selectedType,
-                    initialHours = savedTimerHours,
-                    initialMinutes = savedTimerMinutes,
-                    onSave = onTimerSave
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                PauseAudioToggle(
-                    checked = pauseOtherAudio,
-                    selectedType = selectedType,
-                    onCheckedChange = { service?.updatePauseOtherAudio(it) }
-                )
+                AnimatedContent(
+                    targetState = selectedPanel,
+                    transitionSpec = { fadeIn() togetherWith fadeOut() },
+                    label = "panel"
+                ) { panel ->
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        when (panel) {
+                            Panel.BASIC -> {
+                                SoundSelector(selectedType = selectedType, onTypeSelected = onTypeSelected)
+                                Spacer(modifier = Modifier.height(12.dp))
+                                SleepTimerControl(
+                                    service = service,
+                                    selectedType = selectedType,
+                                    initialHours = savedTimerHours,
+                                    initialMinutes = savedTimerMinutes,
+                                    onSave = onTimerSave
+                                )
+                            }
+                            Panel.ADVANCED -> {
+                                WakeTimerControl(
+                                    service = service,
+                                    selectedType = selectedType,
+                                    initialHours = savedWakeHours,
+                                    initialMinutes = savedWakeMinutes,
+                                    onSave = onWakeTimerSave
+                                )
+                                Spacer(modifier = Modifier.height(12.dp))
+                                PauseAudioToggle(
+                                    checked = pauseOtherAudio,
+                                    selectedType = selectedType,
+                                    onCheckedChange = { service?.updatePauseOtherAudio(it) }
+                                )
+                            }
+                        }
+                    }
+                }
             }
         }
     } else {
@@ -244,37 +264,48 @@ fun SleeprAidScreen(service: NoiseService?) {
 
             VolumeControl(volume = volume, onVolumeChange = onVolumeChange)
 
-            Spacer(modifier = Modifier.height(40.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
-            SoundSelector(selectedType = selectedType, onTypeSelected = onTypeSelected)
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            WakeTimerControl(
-                service = service,
-                selectedType = selectedType,
-                initialHours = savedWakeHours,
-                initialMinutes = savedWakeMinutes,
-                onSave = onWakeTimerSave
-            )
+            PanelSwitcher(selected = selectedPanel, onSelect = { selectedPanel = it })
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            SleepTimerControl(
-                service = service,
-                selectedType = selectedType,
-                initialHours = savedTimerHours,
-                initialMinutes = savedTimerMinutes,
-                onSave = onTimerSave
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            PauseAudioToggle(
-                checked = pauseOtherAudio,
-                selectedType = selectedType,
-                onCheckedChange = { service?.updatePauseOtherAudio(it) }
-            )
+            AnimatedContent(
+                targetState = selectedPanel,
+                transitionSpec = { fadeIn() togetherWith fadeOut() },
+                label = "panel"
+            ) { panel ->
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    when (panel) {
+                        Panel.BASIC -> {
+                            SoundSelector(selectedType = selectedType, onTypeSelected = onTypeSelected)
+                            Spacer(modifier = Modifier.height(12.dp))
+                            SleepTimerControl(
+                                service = service,
+                                selectedType = selectedType,
+                                initialHours = savedTimerHours,
+                                initialMinutes = savedTimerMinutes,
+                                onSave = onTimerSave
+                            )
+                        }
+                        Panel.ADVANCED -> {
+                            WakeTimerControl(
+                                service = service,
+                                selectedType = selectedType,
+                                initialHours = savedWakeHours,
+                                initialMinutes = savedWakeMinutes,
+                                onSave = onWakeTimerSave
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                            PauseAudioToggle(
+                                checked = pauseOtherAudio,
+                                selectedType = selectedType,
+                                onCheckedChange = { service?.updatePauseOtherAudio(it) }
+                            )
+                        }
+                    }
+                }
+            }
 
             Spacer(modifier = Modifier.height(48.dp))
         }
@@ -378,6 +409,45 @@ fun VolumeControl(volume: Float, onVolumeChange: (Float) -> Unit) {
                 tint = Color.White.copy(alpha = 0.6f),
                 modifier = Modifier.size(24.dp)
             )
+        }
+    }
+}
+
+private enum class Panel { BASIC, ADVANCED }
+
+@Composable
+private fun PanelSwitcher(selected: Panel, onSelect: (Panel) -> Unit) {
+    Surface(
+        color = Color(0xFF1E1E1E),
+        shape = RoundedCornerShape(16.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(48.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(4.dp)
+        ) {
+            Panel.entries.forEach { panel ->
+                val isSelected = panel == selected
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(if (isSelected) Color(0xFF90CAF9) else Color.Transparent)
+                        .clickable { onSelect(panel) },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = if (panel == Panel.BASIC) "Basic" else "Advanced",
+                        color = if (isSelected) Color(0xFF0F0F0F) else Color.White.copy(alpha = 0.5f),
+                        fontSize = 14.sp,
+                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
+                    )
+                }
+            }
         }
     }
 }
