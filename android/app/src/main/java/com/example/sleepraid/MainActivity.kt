@@ -36,12 +36,28 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import android.content.res.Configuration
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material.icons.filled.Timer
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
+import kotlinx.coroutines.launch
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
@@ -95,6 +111,8 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun SleeprAidScreen(service: NoiseService?) {
     val context = LocalContext.current
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
     val audioManager = remember { context.getSystemService(Context.AUDIO_SERVICE) as AudioManager }
     val maxVolume = remember { audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC) }
 
@@ -118,71 +136,128 @@ fun SleeprAidScreen(service: NoiseService?) {
         onDispose { context.contentResolver.unregisterContentObserver(observer) }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 24.dp)
-            .statusBarsPadding()
-            .padding(top = 16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        // Top Title
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Start
-        ) {
-            Text(
-                text = "Sleepr Aid",
-                color = Color.White,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold
-            )
-        }
+    val prefs = remember { AppPreferences(context) }
+    val savedTimerHours by prefs.timerHours.collectAsState(initial = 0)
+    val savedTimerMinutes by prefs.timerMinutes.collectAsState(initial = 30)
+    val scope = rememberCoroutineScope()
 
-        Spacer(modifier = Modifier.weight(1f))
-
-        // Power Button
-        PowerButton(isOn = isOn, onClick = {
-            service ?: return@PowerButton
+    val onPowerClick = {
+        if (service != null) {
             if (isOn) service.stopPlayback() else service.play(selectedType)
-        })
+        }
+    }
+    val onVolumeChange = { v: Float ->
+        volume = v
+        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, (v * maxVolume).roundToInt(), 0)
+    }
+    val onTypeSelected: (NoiseGenerator.NoiseType) -> Unit = { type -> service?.updateNoiseType(type) }
+    val onTimerSave: (Int, Int) -> Unit = { h, m ->
+        scope.launch { prefs.saveTimerDuration(h, m) }
+    }
 
-        Spacer(modifier = Modifier.weight(1.2f))
+    if (isLandscape) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 24.dp)
+                .statusBarsPadding()
+                .navigationBarsPadding(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            PowerButton(isOn = isOn, size = 160.dp, onClick = onPowerClick)
 
-        // Volume Control
-        VolumeControl(volume = volume, onVolumeChange = {
-            volume = it
-            audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, (it * maxVolume).roundToInt(), 0)
-        })
+            Spacer(modifier = Modifier.width(32.dp))
 
-        Spacer(modifier = Modifier.height(40.dp))
+            Column(
+                modifier = Modifier.weight(1f),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Sleepr Aid",
+                    color = Color.White,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.align(Alignment.Start)
+                )
+                Spacer(modifier = Modifier.height(20.dp))
+                VolumeControl(volume = volume, onVolumeChange = onVolumeChange)
+                Spacer(modifier = Modifier.height(16.dp))
+                SoundSelector(selectedType = selectedType, onTypeSelected = onTypeSelected)
+                Spacer(modifier = Modifier.height(12.dp))
+                TimerControl(
+                    service = service,
+                    initialHours = savedTimerHours,
+                    initialMinutes = savedTimerMinutes,
+                    onSave = onTimerSave
+                )
+            }
+        }
+    } else {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 24.dp)
+                .statusBarsPadding()
+                .padding(top = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Start
+            ) {
+                Text(
+                    text = "Sleepr Aid",
+                    color = Color.White,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
 
-        // Sound Selector
-        SoundSelector(
-            selectedType = selectedType,
-            onTypeSelected = { type -> service?.updateNoiseType(type) }
-        )
+            Spacer(modifier = Modifier.weight(0.7f))
 
-        Spacer(modifier = Modifier.height(64.dp))
+            PowerButton(isOn = isOn, size = 260.dp, onClick = onPowerClick)
+
+            Spacer(modifier = Modifier.weight(0.7f))
+
+            VolumeControl(volume = volume, onVolumeChange = onVolumeChange)
+
+            Spacer(modifier = Modifier.height(40.dp))
+
+            SoundSelector(selectedType = selectedType, onTypeSelected = onTypeSelected)
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            TimerControl(
+                service = service,
+                initialHours = savedTimerHours,
+                initialMinutes = savedTimerMinutes,
+                onSave = onTimerSave
+            )
+
+            Spacer(modifier = Modifier.height(48.dp))
+        }
     }
 }
 
 @Composable
-fun PowerButton(isOn: Boolean, onClick: () -> Unit) {
+fun PowerButton(isOn: Boolean, size: Dp = 260.dp, onClick: () -> Unit) {
     val accentColor = if (isOn) Color(0xFF90CAF9) else Color(0xFF333333)
     val outerCircleColor = Color(0xFF1A1A1A)
     val innerCircleColor = Color(0xFF121212)
-    
+    val innerSize = size * (180f / 260f)
+    val iconSize = size * (100f / 260f)
+
     Box(
         modifier = Modifier
-            .size(260.dp)
+            .size(size)
             .then(
                 if (isOn) {
                     Modifier.drawBehind {
                         drawCircle(
                             brush = Brush.radialGradient(
                                 colors = listOf(accentColor.copy(alpha = 0.25f), Color.Transparent),
-                                radius = size.minDimension * 0.75f
+                                radius = this.size.minDimension * 0.75f
                             )
                         )
                     }
@@ -198,10 +273,9 @@ fun PowerButton(isOn: Boolean, onClick: () -> Unit) {
             .clickable { onClick() },
         contentAlignment = Alignment.Center
     ) {
-        // Inner depth circle
         Box(
             modifier = Modifier
-                .size(180.dp)
+                .size(innerSize)
                 .clip(CircleShape)
                 .background(innerCircleColor)
                 .border(
@@ -210,11 +284,11 @@ fun PowerButton(isOn: Boolean, onClick: () -> Unit) {
                     shape = CircleShape
                 )
         )
-        
+
         Icon(
             imageVector = Icons.Default.PowerSettingsNew,
             contentDescription = "Power",
-            modifier = Modifier.size(100.dp),
+            modifier = Modifier.size(iconSize),
             tint = accentColor
         )
     }
@@ -334,6 +408,163 @@ fun SoundSelector(
                 )
             }
         }
+    }
+}
+
+@Composable
+fun TimerControl(
+    service: NoiseService?,
+    initialHours: Int,
+    initialMinutes: Int,
+    onSave: (Int, Int) -> Unit
+) {
+    val timerActive = service?.timerActive ?: false
+    val remainingSeconds = service?.timerRemainingSeconds ?: 0
+
+    var hours by remember(initialHours) { mutableIntStateOf(initialHours) }
+    var minutes by remember(initialMinutes) { mutableIntStateOf(initialMinutes) }
+
+    Surface(
+        color = Color(0xFF1E1E1E),
+        shape = RoundedCornerShape(16.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(64.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (timerActive) {
+                Icon(
+                    imageVector = Icons.Default.Timer,
+                    contentDescription = null,
+                    tint = Color(0xFF90CAF9),
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = formatRemainingTime(remainingSeconds),
+                    color = Color(0xFF90CAF9),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium
+                )
+                Spacer(modifier = Modifier.weight(1f))
+                TextButton(onClick = { service?.cancelTimer() }) {
+                    Text("Cancel", color = Color(0xFF90CAF9), fontSize = 14.sp)
+                }
+            } else {
+                TimerStepper(value = hours, label = "h", range = 0..12, step = 1) { hours = it }
+                Spacer(modifier = Modifier.width(8.dp))
+                TimerStepper(value = minutes, label = "m", range = 0..59, step = 5) { minutes = it }
+                Spacer(modifier = Modifier.weight(1f))
+                val canSet = hours > 0 || minutes > 0
+                TextButton(
+                    onClick = {
+                        onSave(hours, minutes)
+                        if (service?.isPlaying == false) service.play()
+                        service?.startTimer(hours, minutes)
+                    },
+                    enabled = canSet
+                ) {
+                    Text(
+                        "Set",
+                        color = if (canSet) Color(0xFF90CAF9) else Color(0xFF555555),
+                        fontSize = 14.sp
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TimerStepper(
+    value: Int,
+    label: String,
+    range: IntRange,
+    step: Int,
+    onValueChange: (Int) -> Unit
+) {
+    var textValue by remember { mutableStateOf(value.toString()) }
+    var focused by remember { mutableStateOf(false) }
+
+    // Sync text with stepper-driven value changes when the field isn't focused
+    LaunchedEffect(value) {
+        if (!focused) textValue = value.toString()
+    }
+
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        IconButton(
+            onClick = { onValueChange((value - step).coerceAtLeast(range.first)) },
+            modifier = Modifier.size(32.dp)
+        ) {
+            Icon(Icons.Default.Remove, contentDescription = null,
+                tint = Color.White.copy(alpha = 0.7f), modifier = Modifier.size(16.dp))
+        }
+        BasicTextField(
+            value = textValue,
+            onValueChange = { input ->
+                if (input.isEmpty() || (input.length <= 2 && input.all { it.isDigit() })) {
+                    textValue = input
+                    val parsed = input.toIntOrNull()
+                    if (parsed != null && parsed in range) onValueChange(parsed)
+                }
+            },
+            textStyle = LocalTextStyle.current.copy(
+                color = Color.White,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Medium,
+                textAlign = TextAlign.Center
+            ),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            singleLine = true,
+            cursorBrush = SolidColor(Color(0xFF90CAF9)),
+            modifier = Modifier
+                .width(36.dp)
+                .drawBehind {
+                    if (focused) drawLine(
+                        color = Color(0xFF90CAF9),
+                        start = Offset(0f, size.height),
+                        end = Offset(size.width, size.height),
+                        strokeWidth = 1.dp.toPx()
+                    )
+                }
+                .onFocusChanged { state ->
+                    if (focused && !state.isFocused) {
+                        val clamped = textValue.toIntOrNull()?.coerceIn(range) ?: range.first
+                        textValue = clamped.toString()
+                        onValueChange(clamped)
+                    }
+                    focused = state.isFocused
+                }
+        )
+        Text(
+            text = label,
+            color = Color.White.copy(alpha = 0.8f),
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Medium
+        )
+        IconButton(
+            onClick = { onValueChange((value + step).coerceAtMost(range.last)) },
+            modifier = Modifier.size(32.dp)
+        ) {
+            Icon(Icons.Default.Add, contentDescription = null,
+                tint = Color.White.copy(alpha = 0.7f), modifier = Modifier.size(16.dp))
+        }
+    }
+}
+
+private fun formatRemainingTime(seconds: Int): String {
+    val h = seconds / 3600
+    val m = (seconds % 3600) / 60
+    val s = seconds % 60
+    return when {
+        h > 0 -> "${h}h ${m}m"
+        m > 0 -> "${m}m ${s}s"
+        else -> "${s}s"
     }
 }
 

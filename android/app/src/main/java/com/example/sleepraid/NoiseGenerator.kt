@@ -12,14 +12,14 @@ class NoiseGenerator {
 
     companion object {
         private const val SAMPLE_RATE = 44100
-        private const val BUFFER_MULTIPLIER = 4
+        private const val BUFFER_MULTIPLIER = 8
 
         // Perceptual loudness normalization. White noise has a flat spectrum so its
         // energy lands heavily in the 1–4kHz range where human hearing is most sensitive.
         // Pink rolls off 3dB/octave and brown 6dB/octave, so both need a gain boost to
         // sound equally loud at the same system volume. Tune these by ear.
-        private const val WHITE_GAIN = 0.25f
-        private const val PINK_GAIN  = 0.85f  // compensates for the 0.11 internal normalization
+        private const val WHITE_GAIN = 0.15f
+        private const val PINK_GAIN  = 0.55f  // compensates for the 0.11 internal normalization
         private const val BROWN_GAIN = 0.95f
     }
 
@@ -58,7 +58,7 @@ class NoiseGenerator {
             .setBufferSizeInBytes(bufferBytes)
             .setTransferMode(AudioTrack.MODE_STREAM)
             .build()
-            .also { it.play() }
+        // play() is deferred until the first buffer is written — see below.
 
         job = scope.launch {
             val buffer = FloatArray(bufferSamples)
@@ -69,6 +69,7 @@ class NoiseGenerator {
 
             // Brown noise accumulator
             var lastBrown = 0f
+            var primed = false
 
             while (isActive) {
                 val currentType = noiseType
@@ -92,16 +93,29 @@ class NoiseGenerator {
                         }
                         NoiseType.BROWN -> {
                             val w = Random.nextFloat() * 2f - 1f
-                            lastBrown = (lastBrown + w * 0.02f).coerceIn(-1f, 1f)
+                            // Leaky integrator: pole at 0.999 keeps the accumulator from
+                            // drifting to ±1 and parking there, which caused hard clips → pops.
+                            lastBrown = (lastBrown * 0.999f + w * 0.02f).coerceIn(-1f, 1f)
                             lastBrown * BROWN_GAIN
                         }
                     }
                 }
 
-                // WRITE_BLOCKING pauses this coroutine until the track consumes the buffer.
-                // stop() calls audioTrack.stop() first, which causes this write to return
-                // early so the while-loop can see isActive == false and exit cleanly.
-                audioTrack?.write(buffer, 0, buffer.size, AudioTrack.WRITE_BLOCKING)
+                if (!primed) {
+                    // Fade in from silence over the first buffer so the 0→noise transition
+                    // is smooth. Write non-blocking (buffer is empty, so it fits), then
+                    // start playback — this guarantees audio hardware never sees an empty
+                    // buffer, which was the source of the startup click.
+                    for (i in buffer.indices) buffer[i] *= i.toFloat() / buffer.size
+                    audioTrack?.write(buffer, 0, buffer.size, AudioTrack.WRITE_NON_BLOCKING)
+                    if (isActive) audioTrack?.play()
+                    primed = true
+                } else {
+                    // WRITE_BLOCKING pauses this coroutine until the track consumes the buffer.
+                    // stop() calls audioTrack.stop() first, which causes this write to return
+                    // early so the while-loop can see isActive == false and exit cleanly.
+                    audioTrack?.write(buffer, 0, buffer.size, AudioTrack.WRITE_BLOCKING)
+                }
             }
         }
     }

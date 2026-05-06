@@ -10,9 +10,19 @@ import android.os.Binder
 import android.os.Build
 import android.os.IBinder
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.core.app.NotificationCompat
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 
 class NoiseService : Service() {
 
@@ -22,10 +32,17 @@ class NoiseService : Service() {
 
     private val binder = NoiseBinder()
     private val noiseGenerator = NoiseGenerator()
+    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private lateinit var prefs: AppPreferences
+    private var timerJob: Job? = null
 
     var isPlaying by mutableStateOf(false)
         private set
     var noiseType by mutableStateOf(NoiseGenerator.NoiseType.PINK)
+        private set
+    var timerActive by mutableStateOf(false)
+        private set
+    var timerRemainingSeconds by mutableIntStateOf(0)
         private set
 
     companion object {
@@ -36,6 +53,7 @@ class NoiseService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        prefs = AppPreferences(this)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 CHANNEL_ID, "Noise Playback", NotificationManager.IMPORTANCE_LOW
@@ -44,6 +62,9 @@ class NoiseService : Service() {
                 enableVibration(false)
             }
             getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
+        }
+        serviceScope.launch {
+            noiseType = prefs.noiseType.first()
         }
     }
 
@@ -62,6 +83,7 @@ class NoiseService : Service() {
     }
 
     fun stopPlayback() {
+        cancelTimer()
         noiseGenerator.stop()
         isPlaying = false
         stopForeground(STOP_FOREGROUND_REMOVE)
@@ -74,6 +96,7 @@ class NoiseService : Service() {
 
     fun updateNoiseType(type: NoiseGenerator.NoiseType) {
         noiseType = type
+        serviceScope.launch { prefs.saveNoiseType(type) }
         if (isPlaying) {
             noiseGenerator.noiseType = type
             getSystemService(NotificationManager::class.java)
@@ -81,9 +104,50 @@ class NoiseService : Service() {
         }
     }
 
+    fun startTimer(hours: Int, minutes: Int) {
+        timerJob?.cancel()
+        val total = hours * 3600 + minutes * 60
+        if (total <= 0) return
+        timerRemainingSeconds = total
+        timerActive = true
+        if (isPlaying) refreshNotification()
+        timerJob = serviceScope.launch {
+            while (isActive && timerRemainingSeconds > 0) {
+                delay(1000L)
+                timerRemainingSeconds--
+                if (isPlaying && (timerRemainingSeconds % 60 == 0 || timerRemainingSeconds < 60)) {
+                    refreshNotification()
+                }
+            }
+            if (isActive) onTimerExpired()
+        }
+    }
+
+    fun cancelTimer() {
+        timerJob?.cancel()
+        timerJob = null
+        timerActive = false
+        timerRemainingSeconds = 0
+    }
+
+    private fun onTimerExpired() {
+        timerActive = false
+        timerJob = null
+        noiseGenerator.stop()
+        isPlaying = false
+        stopForeground(STOP_FOREGROUND_REMOVE)
+        stopSelf()
+    }
+
     override fun onDestroy() {
         noiseGenerator.release()
+        serviceScope.cancel()
         super.onDestroy()
+    }
+
+    private fun refreshNotification() {
+        getSystemService(NotificationManager::class.java)
+            .notify(NOTIFICATION_ID, buildNotification())
     }
 
     private fun buildNotification(): Notification {
@@ -104,14 +168,30 @@ class NoiseService : Service() {
             NoiseGenerator.NoiseType.WHITE -> "White Noise"
             NoiseGenerator.NoiseType.BROWN -> "Brown Noise"
         }
+        val contentText = if (timerActive) {
+            "$noiseLabel · ${formatSeconds(timerRemainingSeconds)} left"
+        } else {
+            noiseLabel
+        }
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle("Sleepr Aid")
-            .setContentText(noiseLabel)
+            .setContentText(contentText)
             .setContentIntent(openApp)
             .setOngoing(true)
             .setSilent(true)
             .addAction(R.drawable.ic_notification, if (isPlaying) "Pause" else "Play", togglePi)
             .build()
+    }
+}
+
+private fun formatSeconds(seconds: Int): String {
+    val h = seconds / 3600
+    val m = (seconds % 3600) / 60
+    val s = seconds % 60
+    return when {
+        h > 0 -> "${h}h ${m}m"
+        m > 0 -> "${m}m ${s}s"
+        else -> "${s}s"
     }
 }
