@@ -40,6 +40,7 @@ import android.content.res.Configuration
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Alarm
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.runtime.collectAsState
@@ -140,6 +141,8 @@ fun SleeprAidScreen(service: NoiseService?) {
     val prefs = remember { AppPreferences(context) }
     val savedTimerHours by prefs.timerHours.collectAsState(initial = 0)
     val savedTimerMinutes by prefs.timerMinutes.collectAsState(initial = 30)
+    val savedWakeHours by prefs.wakeTimerHours.collectAsState(initial = 0)
+    val savedWakeMinutes by prefs.wakeTimerMinutes.collectAsState(initial = 30)
     val scope = rememberCoroutineScope()
 
     val onPowerClick = {
@@ -154,6 +157,9 @@ fun SleeprAidScreen(service: NoiseService?) {
     val onTypeSelected: (NoiseGenerator.NoiseType) -> Unit = { type -> service?.updateNoiseType(type) }
     val onTimerSave: (Int, Int) -> Unit = { h, m ->
         scope.launch { prefs.saveTimerDuration(h, m) }
+    }
+    val onWakeTimerSave: (Int, Int) -> Unit = { h, m ->
+        scope.launch { prefs.saveWakeTimerDuration(h, m) }
     }
 
     if (isLandscape) {
@@ -186,8 +192,17 @@ fun SleeprAidScreen(service: NoiseService?) {
                 Spacer(modifier = Modifier.height(16.dp))
                 SoundSelector(selectedType = selectedType, onTypeSelected = onTypeSelected)
                 Spacer(modifier = Modifier.height(12.dp))
-                TimerControl(
+                WakeTimerControl(
                     service = service,
+                    selectedType = selectedType,
+                    initialHours = savedWakeHours,
+                    initialMinutes = savedWakeMinutes,
+                    onSave = onWakeTimerSave
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                SleepTimerControl(
+                    service = service,
+                    selectedType = selectedType,
                     initialHours = savedTimerHours,
                     initialMinutes = savedTimerMinutes,
                     onSave = onTimerSave
@@ -195,6 +210,7 @@ fun SleeprAidScreen(service: NoiseService?) {
                 Spacer(modifier = Modifier.height(12.dp))
                 PauseAudioToggle(
                     checked = pauseOtherAudio,
+                    selectedType = selectedType,
                     onCheckedChange = { service?.updatePauseOtherAudio(it) }
                 )
             }
@@ -234,8 +250,19 @@ fun SleeprAidScreen(service: NoiseService?) {
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            TimerControl(
+            WakeTimerControl(
                 service = service,
+                selectedType = selectedType,
+                initialHours = savedWakeHours,
+                initialMinutes = savedWakeMinutes,
+                onSave = onWakeTimerSave
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            SleepTimerControl(
+                service = service,
+                selectedType = selectedType,
                 initialHours = savedTimerHours,
                 initialMinutes = savedTimerMinutes,
                 onSave = onTimerSave
@@ -245,6 +272,7 @@ fun SleeprAidScreen(service: NoiseService?) {
 
             PauseAudioToggle(
                 checked = pauseOtherAudio,
+                selectedType = selectedType,
                 onCheckedChange = { service?.updatePauseOtherAudio(it) }
             )
 
@@ -425,8 +453,9 @@ fun SoundSelector(
 }
 
 @Composable
-fun TimerControl(
+fun SleepTimerControl(
     service: NoiseService?,
+    selectedType: NoiseGenerator.NoiseType,
     initialHours: Int,
     initialMinutes: Int,
     onSave: (Int, Int) -> Unit
@@ -436,6 +465,8 @@ fun TimerControl(
 
     var hours by remember(initialHours) { mutableIntStateOf(initialHours) }
     var minutes by remember(initialMinutes) { mutableIntStateOf(initialMinutes) }
+
+    val noiseLabel = noiseTypeLabels[selectedType] ?: "Noise"
 
     Surface(
         color = Color(0xFF1E1E1E),
@@ -469,6 +500,12 @@ fun TimerControl(
                     Text("Cancel", color = Color(0xFF90CAF9), fontSize = 14.sp)
                 }
             } else {
+                Text(
+                    text = "$noiseLabel off in:",
+                    color = Color.White.copy(alpha = 0.6f),
+                    fontSize = 14.sp,
+                    modifier = Modifier.padding(end = 8.dp)
+                )
                 TimerStepper(value = hours, label = "h", range = 0..12, step = 1) { hours = it }
                 Spacer(modifier = Modifier.width(8.dp))
                 TimerStepper(value = minutes, label = "m", range = 0..59, step = 5) { minutes = it }
@@ -485,6 +522,93 @@ fun TimerControl(
                     Text(
                         "Set",
                         color = if (canSet) Color(0xFF90CAF9) else Color(0xFF555555),
+                        fontSize = 14.sp
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun WakeTimerControl(
+    service: NoiseService?,
+    selectedType: NoiseGenerator.NoiseType,
+    initialHours: Int,
+    initialMinutes: Int,
+    onSave: (Int, Int) -> Unit
+) {
+    val wakeTargetTime = service?.wakeTimerTargetTime
+    val isWakeTimerActive = wakeTargetTime != null
+
+    var hours by remember(initialHours) { mutableIntStateOf(initialHours) }
+    var minutes by remember(initialMinutes) { mutableIntStateOf(initialMinutes) }
+
+    val noiseLabel = noiseTypeLabels[selectedType] ?: "Noise"
+
+    Surface(
+        color = Color(0xFF1E1E1E),
+        shape = RoundedCornerShape(16.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(64.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (isWakeTimerActive) {
+                Icon(
+                    imageVector = Icons.Default.Alarm,
+                    contentDescription = null,
+                    tint = Color(0xFF90CAF9),
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                // Using a simple local countdown for the UI, or could just show target time.
+                // For consistency with SleepTimer, let's show a countdown.
+                var currentTime by remember { mutableLongStateOf(System.currentTimeMillis()) }
+                LaunchedEffect(Unit) {
+                    while (true) {
+                        kotlinx.coroutines.delay(1000)
+                        currentTime = System.currentTimeMillis()
+                    }
+                }
+                val remainingSeconds = ((wakeTargetTime - currentTime) / 1000).coerceAtLeast(0).toInt()
+                Text(
+                    text = formatRemainingTime(remainingSeconds),
+                    color = Color(0xFF90CAF9),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium
+                )
+                Spacer(modifier = Modifier.weight(1f))
+                TextButton(onClick = { service?.cancelWakeTimer() }) {
+                    Text("Cancel", color = Color(0xFF90CAF9), fontSize = 14.sp)
+                }
+            } else {
+                Text(
+                    text = "$noiseLabel on in:",
+                    color = Color.White.copy(alpha = 0.6f),
+                    fontSize = 14.sp,
+                    modifier = Modifier.padding(end = 8.dp)
+                )
+                TimerStepper(value = hours, label = "h", range = 0..12, step = 1) { hours = it }
+                Spacer(modifier = Modifier.width(8.dp))
+                TimerStepper(value = minutes, label = "m", range = 0..59, step = 5) { minutes = it }
+                Spacer(modifier = Modifier.weight(1f))
+                val canSet = hours > 0 || minutes > 0
+                TextButton(
+                    onClick = {
+                        onSave(hours, minutes)
+                        service?.scheduleWakeTimer(hours, minutes)
+                    },
+                    enabled = canSet && service?.isPlaying == false
+                ) {
+                    Text(
+                        "Set",
+                        color = if (canSet && service?.isPlaying == false) Color(0xFF90CAF9) else Color(0xFF555555),
                         fontSize = 14.sp
                     )
                 }
@@ -582,25 +706,32 @@ private fun formatRemainingTime(seconds: Int): String {
 }
 
 @Composable
-fun PauseAudioToggle(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+fun PauseAudioToggle(
+    checked: Boolean,
+    selectedType: NoiseGenerator.NoiseType,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    val noiseLabel = noiseTypeLabels[selectedType] ?: "noise"
     Surface(
         color = Color(0xFF1E1E1E),
         shape = RoundedCornerShape(16.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .height(64.dp)
+            .heightIn(min = 64.dp)
     ) {
         Row(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 20.dp),
+                .fillMaxWidth()
+                .padding(vertical = 12.dp, horizontal = 20.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text = "Pause other audio",
+                text = "Pause other audio when $noiseLabel starts",
                 color = Color.White.copy(alpha = 0.9f),
-                fontSize = 18.sp
+                fontSize = 15.sp,
+                lineHeight = 20.sp,
+                modifier = Modifier.weight(1f).padding(end = 16.dp)
             )
             Switch(
                 checked = checked,

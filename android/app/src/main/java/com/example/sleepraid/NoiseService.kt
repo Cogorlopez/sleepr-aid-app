@@ -5,6 +5,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
+import android.content.Context
 import android.content.Intent
 import android.media.AudioAttributes
 import android.media.AudioFocusRequest
@@ -49,6 +50,8 @@ class NoiseService : Service() {
         private set
     var pauseOtherAudio by mutableStateOf(false)
         private set
+    var wakeTimerTargetTime by mutableStateOf<Long?>(null)
+        private set
 
     private lateinit var audioManager: AudioManager
     private var audioFocusRequest: AudioFocusRequest? = null
@@ -66,8 +69,14 @@ class NoiseService : Service() {
 
     companion object {
         const val ACTION_TOGGLE = "com.example.sleepraid.ACTION_TOGGLE"
+        const val ACTION_PLAY = "com.example.sleepraid.ACTION_PLAY"
+        const val ACTION_SET_WAKE_TIMER = "com.example.sleepraid.ACTION_SET_WAKE_TIMER"
+        const val ACTION_CANCEL_WAKE_TIMER = "com.example.sleepraid.ACTION_CANCEL_WAKE_TIMER"
+        const val ACTION_WAKE_ALARM = "com.example.sleepraid.ACTION_WAKE_ALARM"
+        const val ACTION_CANCEL_WAKE_ALARM = "com.example.sleepraid.ACTION_CANCEL_WAKE_ALARM"
         const val CHANNEL_ID = "noise_playback"
         const val NOTIFICATION_ID = 1
+        const val WAKE_TIMER_NOTIFICATION_ID = 2
     }
 
     override fun onCreate() {
@@ -86,17 +95,32 @@ class NoiseService : Service() {
         serviceScope.launch {
             noiseType = prefs.noiseType.first()
             pauseOtherAudio = prefs.pauseOtherAudio.first()
+            wakeTimerTargetTime = prefs.wakeTimerTargetTime.first()
+            // If service started (e.g. after reboot), ensure notification is shown if wake timer active
+            if (wakeTimerTargetTime != null && !isPlaying) {
+                showWakeTimerNotification(wakeTimerTargetTime!!)
+            }
         }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (intent?.action == ACTION_TOGGLE) toggle()
+        when (intent?.action) {
+            ACTION_TOGGLE -> toggle()
+            ACTION_PLAY -> play()
+            ACTION_SET_WAKE_TIMER -> {
+                val h = intent.getIntExtra("hours", 0)
+                val m = intent.getIntExtra("minutes", 0)
+                scheduleWakeTimer(h, m)
+            }
+            ACTION_CANCEL_WAKE_TIMER -> cancelWakeTimer()
+        }
         return START_NOT_STICKY
     }
 
     override fun onBind(intent: Intent): IBinder = binder
 
     fun play(type: NoiseGenerator.NoiseType = noiseType) {
+        if (wakeTimerTargetTime != null) cancelWakeTimer()
         if (pauseOtherAudio && !requestAudioFocus()) return
         noiseType = type
         noiseGenerator.start(type)
@@ -186,6 +210,89 @@ class NoiseService : Service() {
         timerJob = null
         timerActive = false
         timerRemainingSeconds = 0
+    }
+
+    fun scheduleWakeTimer(hours: Int, minutes: Int) {
+        val totalMillis = (hours * 3600 + minutes * 60) * 1000L
+        if (totalMillis <= 0) return
+
+        val targetTime = System.currentTimeMillis() + totalMillis
+        wakeTimerTargetTime = targetTime
+
+        serviceScope.launch {
+            prefs.saveWakeTimerTargetTime(targetTime)
+            prefs.saveWakeTimerDuration(hours, minutes)
+        }
+
+        val alarmManager = getSystemService(Context.ALARM_SERVICE) as android.app.AlarmManager
+        val intent = Intent(this, WakeTimerReceiver::class.java).apply {
+            action = ACTION_WAKE_ALARM
+        }
+        val pi = android.app.PendingIntent.getBroadcast(
+            this, 0, intent,
+            android.app.PendingIntent.FLAG_IMMUTABLE or android.app.PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
+        alarmManager.setAndAllowWhileIdle(
+            android.app.AlarmManager.RTC_WAKEUP,
+            targetTime,
+            pi
+        )
+
+        showWakeTimerNotification(targetTime)
+    }
+
+    fun cancelWakeTimer() {
+        wakeTimerTargetTime = null
+        serviceScope.launch { prefs.saveWakeTimerTargetTime(null) }
+
+        val alarmManager = getSystemService(Context.ALARM_SERVICE) as android.app.AlarmManager
+        val intent = Intent(this, WakeTimerReceiver::class.java).apply {
+            action = ACTION_WAKE_ALARM
+        }
+        val pi = android.app.PendingIntent.getBroadcast(
+            this, 0, intent,
+            android.app.PendingIntent.FLAG_IMMUTABLE or android.app.PendingIntent.FLAG_NO_CREATE
+        )
+        pi?.let { alarmManager.cancel(it) }
+
+        getSystemService(NotificationManager::class.java).cancel(WAKE_TIMER_NOTIFICATION_ID)
+        if (!isPlaying) stopSelf()
+    }
+
+    private fun showWakeTimerNotification(targetTime: Long) {
+        val openApp = android.app.PendingIntent.getActivity(
+            this, 0,
+            Intent(this, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
+            },
+            android.app.PendingIntent.FLAG_IMMUTABLE
+        )
+        val cancelPi = android.app.PendingIntent.getBroadcast(
+            this, 2,
+            Intent(this, WakeTimerReceiver::class.java).setAction(ACTION_CANCEL_WAKE_ALARM),
+            android.app.PendingIntent.FLAG_IMMUTABLE or android.app.PendingIntent.FLAG_UPDATE_CURRENT
+        )
+        val noiseLabel = when (noiseType) {
+            NoiseGenerator.NoiseType.PINK -> "Pink Noise"
+            NoiseGenerator.NoiseType.WHITE -> "White Noise"
+            NoiseGenerator.NoiseType.BROWN -> "Brown Noise"
+        }
+
+        val notification = NotificationCompat.Builder(this, CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle("Sleepr Aid")
+            .setContentText("$noiseLabel starts in")
+            .setUsesChronometer(true)
+            .setChronometerCountDown(true)
+            .setWhen(targetTime)
+            .setContentIntent(openApp)
+            .setSilent(true)
+            .setOngoing(true)
+            .addAction(R.drawable.ic_notification, "Cancel", cancelPi)
+            .build()
+
+        getSystemService(NotificationManager::class.java).notify(WAKE_TIMER_NOTIFICATION_ID, notification)
     }
 
     private fun onTimerExpired() {

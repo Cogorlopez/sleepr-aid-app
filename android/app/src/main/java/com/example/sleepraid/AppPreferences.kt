@@ -20,6 +20,9 @@ class AppPreferences(private val context: Context) {
         private val TIMER_HOURS = intPreferencesKey("timer_hours")
         private val TIMER_MINUTES = intPreferencesKey("timer_minutes")
         private val PAUSE_OTHER_AUDIO = booleanPreferencesKey("pause_other_audio")
+        private val WAKE_TIMER_HOURS = intPreferencesKey("wake_timer_hours")
+        private val WAKE_TIMER_MINUTES = intPreferencesKey("wake_timer_minutes")
+        private val WAKE_TIMER_TARGET_TIME = stringPreferencesKey("wake_timer_target_time") // Store Long as String
     }
 
     val noiseType: Flow<NoiseGenerator.NoiseType> = context.dataStore.data.map { prefs ->
@@ -33,6 +36,10 @@ class AppPreferences(private val context: Context) {
     val timerHours: Flow<Int> = context.dataStore.data.map { it[TIMER_HOURS] ?: 0 }
     val timerMinutes: Flow<Int> = context.dataStore.data.map { it[TIMER_MINUTES] ?: 30 }
 
+    val wakeTimerHours: Flow<Int> = context.dataStore.data.map { it[WAKE_TIMER_HOURS] ?: 0 }
+    val wakeTimerMinutes: Flow<Int> = context.dataStore.data.map { it[WAKE_TIMER_MINUTES] ?: 30 }
+    val wakeTimerTargetTime: Flow<Long?> = context.dataStore.data.map { it[WAKE_TIMER_TARGET_TIME]?.toLongOrNull() }
+
     suspend fun saveNoiseType(type: NoiseGenerator.NoiseType) {
         context.dataStore.edit { it[NOISE_TYPE] = type.name }
     }
@@ -41,6 +48,23 @@ class AppPreferences(private val context: Context) {
         context.dataStore.edit {
             it[TIMER_HOURS] = hours
             it[TIMER_MINUTES] = minutes
+        }
+    }
+
+    suspend fun saveWakeTimerDuration(hours: Int, minutes: Int) {
+        context.dataStore.edit {
+            it[WAKE_TIMER_HOURS] = hours
+            it[WAKE_TIMER_MINUTES] = minutes
+        }
+    }
+
+    suspend fun saveWakeTimerTargetTime(targetTime: Long?) {
+        context.dataStore.edit {
+            if (targetTime == null) {
+                it.remove(WAKE_TIMER_TARGET_TIME)
+            } else {
+                it[WAKE_TIMER_TARGET_TIME] = targetTime.toString()
+            }
         }
     }
 
