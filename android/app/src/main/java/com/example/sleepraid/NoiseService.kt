@@ -234,11 +234,11 @@ class NoiseService : Service() {
             android.app.PendingIntent.FLAG_IMMUTABLE or android.app.PendingIntent.FLAG_UPDATE_CURRENT
         )
 
-        alarmManager.setAndAllowWhileIdle(
-            android.app.AlarmManager.RTC_WAKEUP,
-            targetTime,
-            pi
-        )
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmManager.canScheduleExactAlarms()) {
+            alarmManager.setAndAllowWhileIdle(android.app.AlarmManager.RTC_WAKEUP, targetTime, pi)
+        } else {
+            alarmManager.setExactAndAllowWhileIdle(android.app.AlarmManager.RTC_WAKEUP, targetTime, pi)
+        }
 
         startWakeTimerNotificationUpdates(targetTime)
     }
