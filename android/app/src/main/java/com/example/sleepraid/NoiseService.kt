@@ -123,9 +123,9 @@ class NoiseService : Service() {
     fun play(type: NoiseGenerator.NoiseType = noiseType) {
         if (pauseOtherAudio && !requestAudioFocus()) return
         noiseType = type
-        noiseGenerator.start(type)
         isPlaying = true
         startForeground(NOTIFICATION_ID, buildNotification())
+        noiseGenerator.start(type)
         if (wakeTimerTargetTime != null) cancelWakeTimer()
     }
 
