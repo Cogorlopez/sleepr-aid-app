@@ -503,13 +503,12 @@ fun SleepTimerControl(
                 Text(
                     text = "$noiseLabel off in:",
                     color = Color.White.copy(alpha = 0.6f),
-                    fontSize = 14.sp,
-                    modifier = Modifier.padding(end = 8.dp)
+                    fontSize = 12.sp,
+                    modifier = Modifier.weight(1f)
                 )
                 TimerStepper(value = hours, label = "h", range = 0..12, step = 1) { hours = it }
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(4.dp))
                 TimerStepper(value = minutes, label = "m", range = 0..59, step = 5) { minutes = it }
-                Spacer(modifier = Modifier.weight(1f))
                 val canSet = hours > 0 || minutes > 0
                 TextButton(
                     onClick = {
@@ -591,13 +590,12 @@ fun WakeTimerControl(
                 Text(
                     text = "$noiseLabel on in:",
                     color = Color.White.copy(alpha = 0.6f),
-                    fontSize = 14.sp,
-                    modifier = Modifier.padding(end = 8.dp)
+                    fontSize = 12.sp,
+                    modifier = Modifier.weight(1f)
                 )
                 TimerStepper(value = hours, label = "h", range = 0..12, step = 1) { hours = it }
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(4.dp))
                 TimerStepper(value = minutes, label = "m", range = 0..59, step = 5) { minutes = it }
-                Spacer(modifier = Modifier.weight(1f))
                 val canSet = hours > 0 || minutes > 0
                 TextButton(
                     onClick = {
@@ -636,10 +634,10 @@ private fun TimerStepper(
     Row(verticalAlignment = Alignment.CenterVertically) {
         IconButton(
             onClick = { onValueChange((value - step).coerceAtLeast(range.first)) },
-            modifier = Modifier.size(32.dp)
+            modifier = Modifier.size(24.dp)
         ) {
             Icon(Icons.Default.Remove, contentDescription = null,
-                tint = Color.White.copy(alpha = 0.7f), modifier = Modifier.size(16.dp))
+                tint = Color.White.copy(alpha = 0.7f), modifier = Modifier.size(14.dp))
         }
         BasicTextField(
             value = textValue,
@@ -652,7 +650,7 @@ private fun TimerStepper(
             },
             textStyle = LocalTextStyle.current.copy(
                 color = Color.White,
-                fontSize = 15.sp,
+                fontSize = 14.sp,
                 fontWeight = FontWeight.Medium,
                 textAlign = TextAlign.Center
             ),
@@ -660,7 +658,7 @@ private fun TimerStepper(
             singleLine = true,
             cursorBrush = SolidColor(Color(0xFF90CAF9)),
             modifier = Modifier
-                .width(36.dp)
+                .width(28.dp)
                 .drawBehind {
                     if (focused) drawLine(
                         color = Color(0xFF90CAF9),
@@ -681,15 +679,15 @@ private fun TimerStepper(
         Text(
             text = label,
             color = Color.White.copy(alpha = 0.8f),
-            fontSize = 15.sp,
+            fontSize = 14.sp,
             fontWeight = FontWeight.Medium
         )
         IconButton(
             onClick = { onValueChange((value + step).coerceAtMost(range.last)) },
-            modifier = Modifier.size(32.dp)
+            modifier = Modifier.size(24.dp)
         ) {
             Icon(Icons.Default.Add, contentDescription = null,
-                tint = Color.White.copy(alpha = 0.7f), modifier = Modifier.size(16.dp))
+                tint = Color.White.copy(alpha = 0.7f), modifier = Modifier.size(14.dp))
         }
     }
 }

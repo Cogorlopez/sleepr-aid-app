@@ -52,6 +52,7 @@ class NoiseService : Service() {
         private set
     var wakeTimerTargetTime by mutableStateOf<Long?>(null)
         private set
+    private var wakeTimerUpdateJob: Job? = null
 
     private lateinit var audioManager: AudioManager
     private var audioFocusRequest: AudioFocusRequest? = null
@@ -98,7 +99,7 @@ class NoiseService : Service() {
             wakeTimerTargetTime = prefs.wakeTimerTargetTime.first()
             // If service started (e.g. after reboot), ensure notification is shown if wake timer active
             if (wakeTimerTargetTime != null && !isPlaying) {
-                showWakeTimerNotification(wakeTimerTargetTime!!)
+                startWakeTimerNotificationUpdates(wakeTimerTargetTime!!)
             }
         }
     }
@@ -239,11 +240,13 @@ class NoiseService : Service() {
             pi
         )
 
-        showWakeTimerNotification(targetTime)
+        startWakeTimerNotificationUpdates(targetTime)
     }
 
     fun cancelWakeTimer() {
         wakeTimerTargetTime = null
+        wakeTimerUpdateJob?.cancel()
+        wakeTimerUpdateJob = null
         serviceScope.launch { prefs.saveWakeTimerTargetTime(null) }
 
         val alarmManager = getSystemService(Context.ALARM_SERVICE) as android.app.AlarmManager
@@ -260,18 +263,28 @@ class NoiseService : Service() {
         if (!isPlaying) stopSelf()
     }
 
+    private fun startWakeTimerNotificationUpdates(targetTime: Long) {
+        wakeTimerUpdateJob?.cancel()
+        wakeTimerUpdateJob = serviceScope.launch {
+            while (isActive && wakeTimerTargetTime != null) {
+                showWakeTimerNotification(targetTime)
+                delay(1000)
+            }
+        }
+    }
+
     private fun showWakeTimerNotification(targetTime: Long) {
-        val openApp = android.app.PendingIntent.getActivity(
+        val openApp = PendingIntent.getActivity(
             this, 0,
             Intent(this, MainActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
             },
-            android.app.PendingIntent.FLAG_IMMUTABLE
+            PendingIntent.FLAG_IMMUTABLE
         )
-        val cancelPi = android.app.PendingIntent.getBroadcast(
+        val cancelPi = PendingIntent.getBroadcast(
             this, 2,
             Intent(this, WakeTimerReceiver::class.java).setAction(ACTION_CANCEL_WAKE_ALARM),
-            android.app.PendingIntent.FLAG_IMMUTABLE or android.app.PendingIntent.FLAG_UPDATE_CURRENT
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
         val noiseLabel = when (noiseType) {
             NoiseGenerator.NoiseType.PINK -> "Pink Noise"
@@ -279,13 +292,15 @@ class NoiseService : Service() {
             NoiseGenerator.NoiseType.BROWN -> "Brown Noise"
         }
 
+        val remainingMillis = targetTime - System.currentTimeMillis()
+        val remainingSecs = (remainingMillis / 1000).toInt().coerceAtLeast(0)
+        val timeString = formatSeconds(remainingSecs)
+
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle("Sleepr Aid")
-            .setContentText("$noiseLabel starts in")
-            .setUsesChronometer(true)
-            .setChronometerCountDown(true)
-            .setWhen(targetTime)
+            .setContentText("$noiseLabel starts in $timeString")
+            .setSmallIcon(R.drawable.ic_notification)
             .setContentIntent(openApp)
             .setSilent(true)
             .setOngoing(true)
