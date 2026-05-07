@@ -14,9 +14,11 @@ import android.os.Binder
 import android.os.Build
 import android.os.IBinder
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import kotlin.math.roundToInt
 import androidx.core.app.NotificationCompat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -49,6 +51,10 @@ class NoiseService : Service() {
     var timerRemainingSeconds by mutableIntStateOf(0)
         private set
     var pauseOtherAudio by mutableStateOf(false)
+        private set
+    var useWakeVolume by mutableStateOf(false)
+        private set
+    var wakeVolume by mutableFloatStateOf(0.7f)
         private set
     var wakeTimerTargetTime by mutableStateOf<Long?>(null)
         private set
@@ -97,10 +103,16 @@ class NoiseService : Service() {
         serviceScope.launch {
             noiseType = prefs.noiseType.first()
             pauseOtherAudio = prefs.pauseOtherAudio.first()
-            wakeTimerTargetTime = prefs.wakeTimerTargetTime.first()
-            // If service started (e.g. after reboot), ensure notification is shown if wake timer active
-            if (wakeTimerTargetTime != null && !isPlaying) {
-                startWakeTimerNotificationUpdates(wakeTimerTargetTime!!)
+            useWakeVolume = prefs.useWakeVolume.first()
+            wakeVolume = prefs.wakeVolume.first()
+            // If startWakeAudio() already ran (alarm fired on cold start, isPlaying = true),
+            // do not overwrite the null we already wrote to wakeTimerTargetTime with the
+            // stale pref value that hasn't been cleared yet.
+            if (!isPlaying) {
+                wakeTimerTargetTime = prefs.wakeTimerTargetTime.first()
+                if (wakeTimerTargetTime != null) {
+                    startWakeTimerNotificationUpdates(wakeTimerTargetTime!!)
+                }
             }
         }
     }
@@ -132,20 +144,36 @@ class NoiseService : Service() {
     }
 
     private fun startWakeAudio() {
-        // Clear wake timer state first so play() won't call cancelWakeTimer() and
-        // so the UI transitions away from the countdown immediately.
         wakeTimerTargetTime = null
         wakeTimerUpdateJob?.cancel()
         wakeTimerUpdateJob = null
         serviceScope.launch { prefs.saveWakeTimerTargetTime(null) }
         getSystemService(NotificationManager::class.java).cancel(WAKE_TIMER_NOTIFICATION_ID)
 
-        // Request focus best-effort — a wake alarm must start audio regardless of the result.
-        if (pauseOtherAudio) requestAudioFocus()
-
+        // startForeground must be called within 5s of startForegroundService — satisfy
+        // that window immediately before the async pref load below.
         isPlaying = true
         startForeground(NOTIFICATION_ID, buildNotification())
-        noiseGenerator.start(noiseType)
+
+        // On a cold service start the onCreate prefs coroutine hasn't run yet, so
+        // pauseOtherAudio and noiseType are still at their in-memory defaults. Load
+        // both now before requesting focus or starting audio.
+        serviceScope.launch {
+            val type = prefs.noiseType.first().also { noiseType = it }
+            val pause = prefs.pauseOtherAudio.first().also { pauseOtherAudio = it }
+            val setVol = prefs.useWakeVolume.first().also { useWakeVolume = it }
+            val targetVol = prefs.wakeVolume.first().also { wakeVolume = it }
+            // Guard: the onCreate coroutine may run concurrently and restore the stale pref.
+            wakeTimerTargetTime = null
+            if (setVol) {
+                val maxVol = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+                audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, (targetVol * maxVol).roundToInt(), 0)
+            }
+            if (pause) requestAudioFocus()
+            noiseGenerator.start(type)
+            // Refresh notification now that noiseType is correct.
+            startForeground(NOTIFICATION_ID, buildNotification())
+        }
     }
 
     fun stopPlayback() {
@@ -164,6 +192,16 @@ class NoiseService : Service() {
     fun updatePauseOtherAudio(value: Boolean) {
         pauseOtherAudio = value
         serviceScope.launch { prefs.savePauseOtherAudio(value) }
+    }
+
+    fun updateUseWakeVolume(value: Boolean) {
+        useWakeVolume = value
+        serviceScope.launch { prefs.saveUseWakeVolume(value) }
+    }
+
+    fun updateWakeVolume(volume: Float) {
+        wakeVolume = volume
+        serviceScope.launch { prefs.saveWakeVolume(volume) }
     }
 
     private fun requestAudioFocus(): Boolean {

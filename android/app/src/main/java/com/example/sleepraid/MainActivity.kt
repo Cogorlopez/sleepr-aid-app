@@ -130,6 +130,8 @@ fun SleeprAidScreen(service: NoiseService?) {
     val isOn = service?.isPlaying ?: false
     val selectedType = service?.noiseType ?: NoiseGenerator.NoiseType.PINK
     val pauseOtherAudio = service?.pauseOtherAudio ?: false
+    val useWakeVolume = service?.useWakeVolume ?: false
+    val wakeVolume = service?.wakeVolume ?: 0.7f
     var selectedPanel by remember { mutableStateOf(Panel.BASIC) }
 
     // Keep slider in sync when hardware volume buttons are pressed
@@ -155,9 +157,16 @@ fun SleeprAidScreen(service: NoiseService?) {
             if (isOn) service.stopPlayback() else service.play(selectedType)
         }
     }
-    val onVolumeChange = { v: Float ->
-        volume = v
-        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, (v * maxVolume).roundToInt(), 0)
+    // When wake-volume mode is on the slider is decoupled: it stores a target that is
+    // applied at wake time rather than changing system volume immediately.
+    val displayVolume = if (useWakeVolume) wakeVolume else volume
+    val onVolumeChange: (Float) -> Unit = { v ->
+        if (useWakeVolume) {
+            service?.updateWakeVolume(v)
+        } else {
+            volume = v
+            audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, (v * maxVolume).roundToInt(), 0)
+        }
     }
     val onTypeSelected: (NoiseGenerator.NoiseType) -> Unit = { type -> service?.updateNoiseType(type) }
     val onTimerSave: (Int, Int) -> Unit = { h, m ->
@@ -193,7 +202,7 @@ fun SleeprAidScreen(service: NoiseService?) {
                     modifier = Modifier.align(Alignment.Start)
                 )
                 Spacer(modifier = Modifier.height(20.dp))
-                VolumeControl(volume = volume, onVolumeChange = onVolumeChange)
+                VolumeControl(volume = displayVolume, onVolumeChange = onVolumeChange, isWakeMode = useWakeVolume)
                 Spacer(modifier = Modifier.height(16.dp))
                 PanelSwitcher(selected = selectedPanel, onSelect = { selectedPanel = it })
                 Spacer(modifier = Modifier.height(12.dp))
@@ -222,6 +231,12 @@ fun SleeprAidScreen(service: NoiseService?) {
                                     initialHours = savedWakeHours,
                                     initialMinutes = savedWakeMinutes,
                                     onSave = onWakeTimerSave
+                                )
+                                Spacer(modifier = Modifier.height(12.dp))
+                                WakeVolumeToggle(
+                                    checked = useWakeVolume,
+                                    selectedType = selectedType,
+                                    onCheckedChange = { service?.updateUseWakeVolume(it) }
                                 )
                                 Spacer(modifier = Modifier.height(12.dp))
                                 PauseAudioToggle(
@@ -262,7 +277,7 @@ fun SleeprAidScreen(service: NoiseService?) {
 
             Spacer(modifier = Modifier.weight(0.4f))
 
-            VolumeControl(volume = volume, onVolumeChange = onVolumeChange)
+            VolumeControl(volume = displayVolume, onVolumeChange = onVolumeChange, isWakeMode = useWakeVolume)
 
             Spacer(modifier = Modifier.height(24.dp))
 
@@ -295,6 +310,12 @@ fun SleeprAidScreen(service: NoiseService?) {
                                 initialHours = savedWakeHours,
                                 initialMinutes = savedWakeMinutes,
                                 onSave = onWakeTimerSave
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                            WakeVolumeToggle(
+                                checked = useWakeVolume,
+                                selectedType = selectedType,
+                                onCheckedChange = { service?.updateUseWakeVolume(it) }
                             )
                             Spacer(modifier = Modifier.height(12.dp))
                             PauseAudioToggle(
@@ -367,13 +388,13 @@ fun PowerButton(isOn: Boolean, size: Dp = 260.dp, onClick: () -> Unit) {
 }
 
 @Composable
-fun VolumeControl(volume: Float, onVolumeChange: (Float) -> Unit) {
+fun VolumeControl(volume: Float, onVolumeChange: (Float) -> Unit, isWakeMode: Boolean = false) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.fillMaxWidth()
     ) {
         Text(
-            text = "${(volume * 100).toInt()}%",
+            text = if (isWakeMode) "Wake ${(volume * 100).toInt()}%" else "${(volume * 100).toInt()}%",
             color = Color.White.copy(alpha = 0.9f),
             fontSize = 16.sp,
             fontWeight = FontWeight.Medium
@@ -796,6 +817,46 @@ fun PauseAudioToggle(
         ) {
             Text(
                 text = "Pause other audio when $noiseLabel starts",
+                color = Color.White.copy(alpha = 0.9f),
+                fontSize = 15.sp,
+                lineHeight = 20.sp,
+                modifier = Modifier.weight(1f).padding(end = 16.dp)
+            )
+            Switch(
+                checked = checked,
+                onCheckedChange = onCheckedChange,
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = Color.White,
+                    checkedTrackColor = Color(0xFF90CAF9)
+                )
+            )
+        }
+    }
+}
+
+@Composable
+fun WakeVolumeToggle(
+    checked: Boolean,
+    selectedType: NoiseGenerator.NoiseType,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    val noiseLabel = noiseTypeLabels[selectedType] ?: "noise"
+    Surface(
+        color = Color(0xFF1E1E1E),
+        shape = RoundedCornerShape(16.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 64.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 12.dp, horizontal = 20.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = "Preset volume when $noiseLabel wakes you",
                 color = Color.White.copy(alpha = 0.9f),
                 fontSize = 15.sp,
                 lineHeight = 20.sp,
