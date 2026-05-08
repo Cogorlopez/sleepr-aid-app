@@ -21,6 +21,7 @@ class NoiseGenerator {
         private const val WHITE_GAIN = 0.15f
         private const val PINK_GAIN  = 0.55f  // compensates for the 0.11 internal normalization
         private const val BROWN_GAIN = 1.02f
+        private const val GREEN_GAIN = 0.65f
     }
 
     private var audioTrack: AudioTrack? = null
@@ -70,9 +71,8 @@ class NoiseGenerator {
             // Brown noise accumulator
             var lastBrown = 0f
 
-            // Green noise biquad bandpass filter state (f0=500Hz, Q=1.5, fs=44100)
-            var gx1 = 0f; var gx2 = 0f
-            var gy1 = 0f; var gy2 = 0f
+            // Green noise two-stage filter state: HPF(80 Hz) → LPF(800 Hz)
+            var ghpx = 0f; var ghp = 0f; var glp = 0f
 
             var primed = false
 
@@ -107,13 +107,13 @@ class NoiseGenerator {
                             (lastBrown * BROWN_GAIN).coerceIn(-1f, 1f)
                         }
                         NoiseType.GREEN -> {
-                            // Biquad bandpass centered at 500 Hz (f0=500, Q=1.5, fs=44100).
-                            // Coefficients: b0=0.034771, b1=0, b2=-0.034771, a1=-1.948953, a2=0.953660
+                            // HPF at ~80 Hz (α = e^−2π·80/44100) removes sub-bass rumble;
+                            // LPF at ~800 Hz (α = 1−e^−2π·800/44100) cuts the harsh highs.
                             val w = Random.nextFloat() * 2f - 1f
-                            val y = 0.034771f * w - 0.034771f * gx2 + 1.948953f * gy1 - 0.953660f * gy2
-                            gx2 = gx1; gx1 = w
-                            gy2 = gy1; gy1 = y
-                            y.coerceIn(-1f, 1f) * GREEN_GAIN
+                            val hp = 0.9887f * (ghp + w - ghpx)
+                            ghpx = w; ghp = hp
+                            glp = 0.1077f * hp + 0.8923f * glp
+                            glp.coerceIn(-1f, 1f) * GREEN_GAIN
                         }
                     }
                 }

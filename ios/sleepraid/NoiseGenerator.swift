@@ -28,14 +28,13 @@ class NoiseGenerator: ObservableObject {
     // Brown noise integrator — written only on the audio thread
     private var lastBrown: Float = 0
 
-    // Green noise biquad bandpass filter state (f0=500Hz, Q=1.5, fs=44100)
-    private var gx1: Float = 0, gx2: Float = 0
-    private var gy1: Float = 0, gy2: Float = 0
+    // Green noise two-stage filter state: HPF(80 Hz) → LPF(800 Hz)
+    private var ghpx: Float = 0, ghp: Float = 0, glp: Float = 0
 
     private let whiteGain: Float = 0.25
     private let pinkGain:  Float = 0.85
     private let brownGain: Float = 0.95
-    private let greenGain: Float = 0.85  // bandpass output is low-amplitude; boost to match loudness
+    private let greenGain: Float = 0.65
 
     func start(type: NoiseType = .pink, pauseOtherAudio: Bool = false) {
         stop()
@@ -98,7 +97,7 @@ class NoiseGenerator: ObservableObject {
         }
         b0 = 0; b1 = 0; b2 = 0; b3 = 0; b4 = 0; b5 = 0; b6 = 0
         lastBrown = 0
-        gx1 = 0; gx2 = 0; gy1 = 0; gy2 = 0
+        ghpx = 0; ghp = 0; glp = 0
         if pauseOtherAudio {
             try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
         }
@@ -132,13 +131,13 @@ class NoiseGenerator: ObservableObject {
             return lastBrown * brownGain
 
         case .green:
-            // Biquad bandpass centered at 500 Hz (f0=500, Q=1.5, fs=44100).
-            // Coefficients: b0=0.034771, b1=0, b2=-0.034771, a1=-1.948953, a2=0.953660
+            // HPF at ~80 Hz (α = e^−2π·80/44100) removes sub-bass rumble;
+            // LPF at ~800 Hz (α = 1−e^−2π·800/44100) cuts the harsh highs.
             let w = Float.random(in: -1...1)
-            let y = 0.034771 * w - 0.034771 * gx2 + 1.948953 * gy1 - 0.953660 * gy2
-            gx2 = gx1; gx1 = w
-            gy2 = gy1; gy1 = y
-            return min(1, max(-1, y)) * greenGain
+            let hp = 0.9887 * (ghp + w - ghpx)
+            ghpx = w; ghp = hp
+            glp = 0.1077 * hp + 0.8923 * glp
+            return min(1, max(-1, glp)) * greenGain
         }
     }
 }
