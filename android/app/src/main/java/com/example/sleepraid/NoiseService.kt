@@ -165,11 +165,22 @@ class NoiseService : Service() {
             val targetVol = prefs.wakeVolume.first().also { wakeVolume = it }
             // Guard: the onCreate coroutine may run concurrently and restore the stale pref.
             wakeTimerTargetTime = null
+
+            // Request focus BEFORE changing volume. If wake volume is set, the other app
+            // would briefly blast at the new higher level before pausing (the "spike") if
+            // we raised the volume first. Requesting focus first tells the other app to stop
+            // immediately, then we set volume while it's already quiet.
+            if (pause) {
+                requestAudioFocus()
+                // AUDIOFOCUS_LOSS is dispatched asynchronously; give other apps ~300 ms to
+                // actually stop before we raise the volume and start our audio.
+                delay(300)
+            }
+
             if (setVol) {
                 val maxVol = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
                 audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, (targetVol * maxVol).roundToInt(), 0)
             }
-            if (pause) requestAudioFocus()
             noiseGenerator.start(type)
             // Refresh notification now that noiseType is correct.
             startForeground(NOTIFICATION_ID, buildNotification())

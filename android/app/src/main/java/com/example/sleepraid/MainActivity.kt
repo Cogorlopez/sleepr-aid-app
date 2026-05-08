@@ -16,6 +16,8 @@ import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -186,12 +188,17 @@ fun SleeprAidScreen(service: NoiseService?) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
         ) {
-            PowerButton(isOn = isOn, size = 160.dp, onClick = onPowerClick)
+            Box(
+                modifier = Modifier.weight(1f),
+                contentAlignment = Alignment.Center
+            ) {
+                PowerButton(isOn = isOn, size = 220.dp, onClick = onPowerClick)
+            }
 
             Spacer(modifier = Modifier.width(32.dp))
 
             Column(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(2f),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
@@ -211,7 +218,12 @@ fun SleeprAidScreen(service: NoiseService?) {
                     transitionSpec = { fadeIn() togetherWith fadeOut() },
                     label = "panel"
                 ) { panel ->
-                    Column(modifier = Modifier.fillMaxWidth()) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(250.dp)
+                            .verticalScroll(rememberScrollState())
+                    ) {
                         when (panel) {
                             Panel.BASIC -> {
                                 SoundSelector(selectedType = selectedType, onTypeSelected = onTypeSelected)
@@ -290,7 +302,12 @@ fun SleeprAidScreen(service: NoiseService?) {
                 transitionSpec = { fadeIn() togetherWith fadeOut() },
                 label = "panel"
             ) { panel ->
-                Column(modifier = Modifier.fillMaxWidth()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(250.dp)
+                        .verticalScroll(rememberScrollState())
+                ) {
                     when (panel) {
                         Panel.BASIC -> {
                             SoundSelector(selectedType = selectedType, onTypeSelected = onTypeSelected)
@@ -856,7 +873,7 @@ fun WakeVolumeToggle(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text = "Preset volume when $noiseLabel wakes you",
+                text = "Preset volume when $noiseLabel activates",
                 color = Color.White.copy(alpha = 0.9f),
                 fontSize = 15.sp,
                 lineHeight = 20.sp,
