@@ -20,8 +20,7 @@ class NoiseGenerator {
         // sound equally loud at the same system volume. Tune these by ear.
         private const val WHITE_GAIN = 0.15f
         private const val PINK_GAIN  = 0.55f  // compensates for the 0.11 internal normalization
-        private const val BROWN_GAIN = 0.95f
-        private const val GREEN_GAIN = 0.90f  // bandpass output is low-amplitude; boost to match loudness
+        private const val BROWN_GAIN = 1.02f
     }
 
     private var audioTrack: AudioTrack? = null
@@ -99,10 +98,13 @@ class NoiseGenerator {
                         }
                         NoiseType.BROWN -> {
                             val w = Random.nextFloat() * 2f - 1f
-                            // Leaky integrator: pole at 0.999 keeps the accumulator from
-                            // drifting to ±1 and parking there, which caused hard clips → pops.
-                            lastBrown = (lastBrown * 0.999f + w * 0.02f).coerceIn(-1f, 1f)
-                            lastBrown * BROWN_GAIN
+                            // Leaky integrator (OU process). Safety bound at ±2 rather than ±1
+                            // so the accumulator is never parked at the clamp boundary — that
+                            // created sustained flat-top plateaus audible as "skipping". At ±2
+                            // the bound is ~7.7σ away and essentially never fires; transient
+                            // excursions past ±1 are caught by the output coerceIn below.
+                            lastBrown = (lastBrown * 0.999f + w * 0.02f).coerceIn(-2f, 2f)
+                            (lastBrown * BROWN_GAIN).coerceIn(-1f, 1f)
                         }
                         NoiseType.GREEN -> {
                             // Biquad bandpass centered at 500 Hz (f0=500, Q=1.5, fs=44100).

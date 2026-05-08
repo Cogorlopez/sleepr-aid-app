@@ -16,6 +16,9 @@ class NoiseGenerator: ObservableObject {
     @Published var isPlaying = false
     var noiseType: NoiseType = .pink
 
+    private var pauseOtherAudio: Bool = false
+    private var interruptionObserver: NSObjectProtocol?
+
     private var volume: Float = 0.7
 
     // Pink noise IIR state (Paul Kellet algorithm) — written only on the audio thread
@@ -34,7 +37,7 @@ class NoiseGenerator: ObservableObject {
     private let brownGain: Float = 0.95
     private let greenGain: Float = 0.85  // bandpass output is low-amplitude; boost to match loudness
 
-    func start(type: NoiseType = .pink) {
+    func start(type: NoiseType = .pink, pauseOtherAudio: Bool = false) {
         stop()
         noiseType = type
 
@@ -57,7 +60,24 @@ class NoiseGenerator: ObservableObject {
         engine.connect(sourceNode!, to: mixer, format: format)
 
         do {
-            try AVAudioSession.sharedInstance().setCategory(.playback)
+            self.pauseOtherAudio = pauseOtherAudio
+            if pauseOtherAudio {
+                try AVAudioSession.sharedInstance().setCategory(.playback)
+                interruptionObserver = NotificationCenter.default.addObserver(
+                    forName: AVAudioSession.interruptionNotification,
+                    object: AVAudioSession.sharedInstance(),
+                    queue: .main
+                ) { [weak self] notification in
+                    guard let self,
+                          let typeValue = notification.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt,
+                          let type = AVAudioSession.InterruptionType(rawValue: typeValue)
+                    else { return }
+                    if type == .began { self.stop() }
+                    // .ended intentionally ignored — user must tap Play again
+                }
+            } else {
+                try AVAudioSession.sharedInstance().setCategory(.playback, options: .mixWithOthers)
+            }
             try AVAudioSession.sharedInstance().setActive(true)
             try engine.start()
             DispatchQueue.main.async { self.isPlaying = true }
@@ -67,6 +87,10 @@ class NoiseGenerator: ObservableObject {
     }
 
     func stop() {
+        if let token = interruptionObserver {
+            NotificationCenter.default.removeObserver(token)
+            interruptionObserver = nil
+        }
         engine.stop()
         if let node = sourceNode {
             engine.detach(node)
@@ -75,6 +99,9 @@ class NoiseGenerator: ObservableObject {
         b0 = 0; b1 = 0; b2 = 0; b3 = 0; b4 = 0; b5 = 0; b6 = 0
         lastBrown = 0
         gx1 = 0; gx2 = 0; gy1 = 0; gy2 = 0
+        if pauseOtherAudio {
+            try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+        }
         DispatchQueue.main.async { self.isPlaying = false }
     }
 
