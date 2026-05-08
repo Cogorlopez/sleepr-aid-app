@@ -32,6 +32,7 @@ class AppPreferences(private val context: Context) {
         when (prefs[NOISE_TYPE]) {
             "WHITE" -> NoiseGenerator.NoiseType.WHITE
             "BROWN" -> NoiseGenerator.NoiseType.BROWN
+            "GREEN" -> NoiseGenerator.NoiseType.GREEN
             else -> NoiseGenerator.NoiseType.PINK
         }
     }

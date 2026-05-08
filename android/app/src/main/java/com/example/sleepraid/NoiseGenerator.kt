@@ -8,7 +8,7 @@ import kotlin.random.Random
 
 class NoiseGenerator {
 
-    enum class NoiseType { WHITE, PINK, BROWN }
+    enum class NoiseType { WHITE, PINK, BROWN, GREEN }
 
     companion object {
         private const val SAMPLE_RATE = 44100
@@ -21,6 +21,7 @@ class NoiseGenerator {
         private const val WHITE_GAIN = 0.15f
         private const val PINK_GAIN  = 0.55f  // compensates for the 0.11 internal normalization
         private const val BROWN_GAIN = 1.02f
+        private const val GREEN_GAIN = 0.65f
     }
 
     private var audioTrack: AudioTrack? = null
@@ -69,6 +70,10 @@ class NoiseGenerator {
 
             // Brown noise accumulator
             var lastBrown = 0f
+
+            // Green noise two-stage filter state: HPF(80 Hz) → LPF(800 Hz)
+            var ghpx = 0f; var ghp = 0f; var glp = 0f
+
             var primed = false
 
             while (isActive) {
@@ -100,6 +105,15 @@ class NoiseGenerator {
                             // excursions past ±1 are caught by the output coerceIn below.
                             lastBrown = (lastBrown * 0.999f + w * 0.02f).coerceIn(-2f, 2f)
                             (lastBrown * BROWN_GAIN).coerceIn(-1f, 1f)
+                        }
+                        NoiseType.GREEN -> {
+                            // HPF at ~80 Hz (α = e^−2π·80/44100) removes sub-bass rumble;
+                            // LPF at ~800 Hz (α = 1−e^−2π·800/44100) cuts the harsh highs.
+                            val w = Random.nextFloat() * 2f - 1f
+                            val hp = 0.9887f * (ghp + w - ghpx)
+                            ghpx = w; ghp = hp
+                            glp = 0.1077f * hp + 0.8923f * glp
+                            glp.coerceIn(-1f, 1f) * GREEN_GAIN
                         }
                     }
                 }

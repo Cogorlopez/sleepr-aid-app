@@ -4,6 +4,7 @@ enum NoiseType: String, CaseIterable, Identifiable {
     case white = "White Noise"
     case pink  = "Pink Noise"
     case brown = "Brown Noise"
+    case green = "Green Noise"
     var id: Self { self }
 }
 
@@ -27,9 +28,13 @@ class NoiseGenerator: ObservableObject {
     // Brown noise integrator — written only on the audio thread
     private var lastBrown: Float = 0
 
+    // Green noise two-stage filter state: HPF(80 Hz) → LPF(800 Hz)
+    private var ghpx: Float = 0, ghp: Float = 0, glp: Float = 0
+
     private let whiteGain: Float = 0.25
     private let pinkGain:  Float = 0.85
     private let brownGain: Float = 0.95
+    private let greenGain: Float = 0.65
 
     func start(type: NoiseType = .pink, pauseOtherAudio: Bool = false) {
         stop()
@@ -92,6 +97,7 @@ class NoiseGenerator: ObservableObject {
         }
         b0 = 0; b1 = 0; b2 = 0; b3 = 0; b4 = 0; b5 = 0; b6 = 0
         lastBrown = 0
+        ghpx = 0; ghp = 0; glp = 0
         if pauseOtherAudio {
             try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
         }
@@ -123,6 +129,15 @@ class NoiseGenerator: ObservableObject {
             let w = Float.random(in: -1...1)
             lastBrown = min(1, max(-1, lastBrown + w * 0.02))
             return lastBrown * brownGain
+
+        case .green:
+            // HPF at ~80 Hz (α = e^−2π·80/44100) removes sub-bass rumble;
+            // LPF at ~800 Hz (α = 1−e^−2π·800/44100) cuts the harsh highs.
+            let w = Float.random(in: -1...1)
+            let hp = 0.9887 * (ghp + w - ghpx)
+            ghpx = w; ghp = hp
+            glp = 0.1077 * hp + 0.8923 * glp
+            return min(1, max(-1, glp)) * greenGain
         }
     }
 }
