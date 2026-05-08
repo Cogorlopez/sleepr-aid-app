@@ -358,6 +358,7 @@ class NoiseService : Service() {
             NoiseGenerator.NoiseType.PINK -> "Pink Noise"
             NoiseGenerator.NoiseType.WHITE -> "White Noise"
             NoiseGenerator.NoiseType.BROWN -> "Brown Noise"
+            NoiseGenerator.NoiseType.GREEN -> "Green Noise"
         }
 
         val remainingMillis = targetTime - System.currentTimeMillis()
