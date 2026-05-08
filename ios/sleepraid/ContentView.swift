@@ -3,6 +3,7 @@ import SwiftUI
 struct ContentView: View {
     @StateObject private var generator = NoiseGenerator()
     @State private var volume: Double = 0.7
+    @AppStorage("pauseOtherAudio") private var pauseOtherAudio: Bool = false
 
     private let accentOn = Color(red: 0.565, green: 0.792, blue: 0.976) // #90CAF9
     private let bg       = Color(red: 0.059, green: 0.059, blue: 0.059) // #0F0F0F
@@ -29,7 +30,7 @@ struct ContentView: View {
                     if generator.isPlaying {
                         generator.stop()
                     } else {
-                        generator.start(type: generator.noiseType)
+                        generator.start(type: generator.noiseType, pauseOtherAudio: pauseOtherAudio)
                     }
                 }
 
@@ -45,9 +46,27 @@ struct ContentView: View {
                 SoundSelector(selected: $generator.noiseType) { type in
                     if generator.isPlaying {
                         generator.stop()
-                        generator.start(type: type)
+                        generator.start(type: type, pauseOtherAudio: pauseOtherAudio)
                     }
                 }
+                .padding(.horizontal, 24)
+
+                Spacer().frame(height: 12)
+
+                HStack {
+                    Text("Pause other audio")
+                        .font(.system(size: 18))
+                        .foregroundColor(.white.opacity(0.9))
+                    Spacer()
+                    Toggle("", isOn: $pauseOtherAudio)
+                        .labelsHidden()
+                        .tint(accentOn)
+                }
+                .padding(.horizontal, 20)
+                .frame(maxWidth: .infinity)
+                .frame(height: 64)
+                .background(Color(white: 0.118))
+                .cornerRadius(16)
                 .padding(.horizontal, 24)
 
                 Spacer().frame(height: 64)
