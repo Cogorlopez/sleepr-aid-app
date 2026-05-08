@@ -8,7 +8,7 @@ import kotlin.random.Random
 
 class NoiseGenerator {
 
-    enum class NoiseType { WHITE, PINK, BROWN }
+    enum class NoiseType { WHITE, PINK, BROWN, GREEN }
 
     companion object {
         private const val SAMPLE_RATE = 44100
@@ -21,6 +21,7 @@ class NoiseGenerator {
         private const val WHITE_GAIN = 0.15f
         private const val PINK_GAIN  = 0.55f  // compensates for the 0.11 internal normalization
         private const val BROWN_GAIN = 0.95f
+        private const val GREEN_GAIN = 0.90f  // bandpass output is low-amplitude; boost to match loudness
     }
 
     private var audioTrack: AudioTrack? = null
@@ -69,6 +70,11 @@ class NoiseGenerator {
 
             // Brown noise accumulator
             var lastBrown = 0f
+
+            // Green noise biquad bandpass filter state (f0=500Hz, Q=1.5, fs=44100)
+            var gx1 = 0f; var gx2 = 0f
+            var gy1 = 0f; var gy2 = 0f
+
             var primed = false
 
             while (isActive) {
@@ -97,6 +103,15 @@ class NoiseGenerator {
                             // drifting to ±1 and parking there, which caused hard clips → pops.
                             lastBrown = (lastBrown * 0.999f + w * 0.02f).coerceIn(-1f, 1f)
                             lastBrown * BROWN_GAIN
+                        }
+                        NoiseType.GREEN -> {
+                            // Biquad bandpass centered at 500 Hz (f0=500, Q=1.5, fs=44100).
+                            // Coefficients: b0=0.034771, b1=0, b2=-0.034771, a1=-1.948953, a2=0.953660
+                            val w = Random.nextFloat() * 2f - 1f
+                            val y = 0.034771f * w - 0.034771f * gx2 + 1.948953f * gy1 - 0.953660f * gy2
+                            gx2 = gx1; gx1 = w
+                            gy2 = gy1; gy1 = y
+                            y.coerceIn(-1f, 1f) * GREEN_GAIN
                         }
                     }
                 }

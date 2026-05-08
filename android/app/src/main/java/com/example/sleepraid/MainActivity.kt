@@ -344,7 +344,8 @@ fun VolumeControl(volume: Float, onVolumeChange: (Float) -> Unit) {
 private val noiseTypeLabels = mapOf(
     NoiseGenerator.NoiseType.PINK to "Pink Noise",
     NoiseGenerator.NoiseType.WHITE to "White Noise",
-    NoiseGenerator.NoiseType.BROWN to "Brown Noise"
+    NoiseGenerator.NoiseType.BROWN to "Brown Noise",
+    NoiseGenerator.NoiseType.GREEN to "Green Noise"
 )
 
 @Composable

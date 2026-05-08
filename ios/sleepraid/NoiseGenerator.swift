@@ -4,6 +4,7 @@ enum NoiseType: String, CaseIterable, Identifiable {
     case white = "White Noise"
     case pink  = "Pink Noise"
     case brown = "Brown Noise"
+    case green = "Green Noise"
     var id: Self { self }
 }
 
@@ -24,9 +25,14 @@ class NoiseGenerator: ObservableObject {
     // Brown noise integrator — written only on the audio thread
     private var lastBrown: Float = 0
 
+    // Green noise biquad bandpass filter state (f0=500Hz, Q=1.5, fs=44100)
+    private var gx1: Float = 0, gx2: Float = 0
+    private var gy1: Float = 0, gy2: Float = 0
+
     private let whiteGain: Float = 0.25
     private let pinkGain:  Float = 0.85
     private let brownGain: Float = 0.95
+    private let greenGain: Float = 0.85  // bandpass output is low-amplitude; boost to match loudness
 
     func start(type: NoiseType = .pink) {
         stop()
@@ -68,6 +74,7 @@ class NoiseGenerator: ObservableObject {
         }
         b0 = 0; b1 = 0; b2 = 0; b3 = 0; b4 = 0; b5 = 0; b6 = 0
         lastBrown = 0
+        gx1 = 0; gx2 = 0; gy1 = 0; gy2 = 0
         DispatchQueue.main.async { self.isPlaying = false }
     }
 
@@ -96,6 +103,15 @@ class NoiseGenerator: ObservableObject {
             let w = Float.random(in: -1...1)
             lastBrown = min(1, max(-1, lastBrown + w * 0.02))
             return lastBrown * brownGain
+
+        case .green:
+            // Biquad bandpass centered at 500 Hz (f0=500, Q=1.5, fs=44100).
+            // Coefficients: b0=0.034771, b1=0, b2=-0.034771, a1=-1.948953, a2=0.953660
+            let w = Float.random(in: -1...1)
+            let y = 0.034771 * w - 0.034771 * gx2 + 1.948953 * gy1 - 0.953660 * gy2
+            gx2 = gx1; gx1 = w
+            gy2 = gy1; gy1 = y
+            return min(1, max(-1, y)) * greenGain
         }
     }
 }
